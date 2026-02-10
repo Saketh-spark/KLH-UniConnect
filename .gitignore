@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.venv/
+
+# Build outputs
+target/
+dist/
+build/
+*.class
+*.jar
+!**/wrapper/*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+nohup.out
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Frontend build cache
+.cache/
+.parcel-cache/
+
+# Java/Maven
+target/
+*.class
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Uploads (large binary files)
+uploads/
+KLH-uniconnect/uploads/
+KLH-uniconnect/backend/uploads/

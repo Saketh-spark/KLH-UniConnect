@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --slate: #0f172a;
+  --muted: #475467;
+  --card: #ffffff;
+}
+
+body {
+  font-family: 'Inter', 'Poppins', system-ui, sans-serif;
+  min-height: 100vh;
+  background: #f8fafc;
+  color: var(--slate);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+main {
+  padding-top: 3rem;
+}

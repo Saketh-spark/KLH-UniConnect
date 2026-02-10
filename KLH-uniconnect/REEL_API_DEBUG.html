@@ -1,0 +1,226 @@
+<!-- Debug page to test reel API endpoints -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reel API Debug</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #fff; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { margin-bottom: 20px; color: #2563eb; }
+    .section { background: #1a1a1a; border: 1px solid #333; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+    .button-group { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    button { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    button:hover { background: #1d4ed8; }
+    button.danger { background: #dc2626; }
+    button.danger:hover { background: #b91c1c; }
+    .input-group { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    input { background: #2a2a2a; color: white; border: 1px solid #444; padding: 10px; border-radius: 6px; flex: 1; min-width: 200px; }
+    .response { background: #0a0a0a; border: 1px solid #444; padding: 15px; border-radius: 6px; margin-top: 15px; max-height: 400px; overflow-y: auto; font-size: 12px; font-family: 'Monaco', 'Courier New', monospace; }
+    .success { color: #10b981; }
+    .error { color: #ef4444; }
+    .warning { color: #f59e0b; }
+    .info { color: #3b82f6; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #333; }
+    th { background: #2a2a2a; color: #2563eb; }
+    tr:hover { background: #2a2a2a; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎥 Reel API Debug Dashboard</h1>
+    
+    <div class="section">
+      <h2>API Configuration</h2>
+      <div class="input-group">
+        <input type="text" id="apiBase" placeholder="API Base URL" value="http://localhost:8085">
+        <input type="text" id="studentId" placeholder="Student ID" value="student-123">
+        <input type="text" id="facultyId" placeholder="Faculty ID" value="faculty-456">
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Student Endpoints</h2>
+      <div class="button-group">
+        <button onclick="testGetReels()">GET /api/reels</button>
+        <button onclick="testGetMyReels()">GET /api/reels/my-reels</button>
+        <button onclick="testGetReelById()">GET /api/reels/:id</button>
+        <button onclick="testAddComment()">POST /api/reels/:id/comment</button>
+        <button onclick="testLikeReel()">POST /api/reels/:id/like</button>
+      </div>
+      <div class="response" id="studentResponse"></div>
+    </div>
+
+    <div class="section">
+      <h2>Faculty Endpoints</h2>
+      <div class="button-group">
+        <button onclick="testGetReviewQueue()">GET /faculty/review-queue</button>
+        <button onclick="testGetFilteredReels()">GET /faculty/filter</button>
+        <button onclick="testAddFeedback()">POST /faculty-feedback</button>
+        <button onclick="testApproveReel()">POST /academic-status</button>
+        <button onclick="testMarkPlacementReady()">POST /placement-ready</button>
+      </div>
+      <div class="response" id="facultyResponse"></div>
+    </div>
+
+    <div class="section">
+      <h2>Database Status</h2>
+      <div class="button-group">
+        <button onclick="checkReelCount()">Check Reel Count</button>
+        <button onclick="listAllReels()">List All Reels</button>
+        <button onclick="testVideoUrls()">Test Video URLs</button>
+      </div>
+      <div class="response" id="dbResponse"></div>
+    </div>
+
+    <div class="section">
+      <h2>Real-time Sync Test</h2>
+      <div class="button-group">
+        <button onclick="testWebSocketConnection()">Test WebSocket Connection</button>
+        <button onclick="testWebSocketMessage()">Send WebSocket Message</button>
+        <button class="danger" onclick="closeWebSocket()">Close WebSocket</button>
+      </div>
+      <div class="response" id="wsResponse"></div>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+
+    function getApiBase() { return document.getElementById('apiBase').value; }
+    function getStudentId() { return document.getElementById('studentId').value; }
+    function getFacultyId() { return document.getElementById('facultyId').value; }
+
+    async function testGetReels() {
+      try {
+        const res = await fetch(`${getApiBase()}/api/reels`, {
+          headers: { 'X-Student-Id': getStudentId() }
+        });
+        const data = await res.json();
+        displayResponse('studentResponse', JSON.stringify(data, null, 2), res.ok);
+        
+        // Show video URLs
+        if (Array.isArray(data)) {
+          const videoUrls = data.map((r, i) => `${i+1}. ${r.title || 'Unknown'}: ${r.videoUrl || 'NO URL'}`).join('\n');
+          displayResponse('studentResponse', videoUrls + '\n\n' + JSON.stringify(data, null, 2), res.ok);
+        }
+      } catch (e) {
+        displayResponse('studentResponse', `Error: ${e.message}`, false);
+      }
+    }
+
+    async function testGetMyReels() {
+      try {
+        const res = await fetch(`${getApiBase()}/api/reels/my-reels`, {
+          headers: { 'X-Student-Id': getStudentId() }
+        });
+        const data = await res.json();
+        displayResponse('studentResponse', JSON.stringify(data, null, 2), res.ok);
+      } catch (e) {
+        displayResponse('studentResponse', `Error: ${e.message}`, false);
+      }
+    }
+
+    async function testGetReviewQueue() {
+      try {
+        const res = await fetch(`${getApiBase()}/api/reels/faculty/review-queue`, {
+          headers: { 'X-Faculty-Id': getFacultyId() }
+        });
+        const data = await res.json();
+        displayResponse('facultyResponse', JSON.stringify(data, null, 2), res.ok);
+      } catch (e) {
+        displayResponse('facultyResponse', `Error: ${e.message}`, false);
+      }
+    }
+
+    async function checkReelCount() {
+      try {
+        const res = await fetch(`${getApiBase()}/api/reels`, {
+          headers: { 'X-Student-Id': getStudentId() }
+        });
+        const data = await res.json();
+        const count = Array.isArray(data) ? data.length : 0;
+        const msg = `Total reels in database: ${count}\n${count === 0 ? 'WARNING: No reels found! Upload some reels first.' : 'OK'}`;
+        displayResponse('dbResponse', msg, count > 0);
+      } catch (e) {
+        displayResponse('dbResponse', `Error: ${e.message}`, false);
+      }
+    }
+
+    async function listAllReels() {
+      try {
+        const res = await fetch(`${getApiBase()}/api/reels`, {
+          headers: { 'X-Student-Id': getStudentId() }
+        });
+        const data = await res.json();
+        const html = Array.isArray(data) 
+          ? data.map((r, i) => `${i+1}. ID: ${r.id}\n   Title: ${r.title}\n   Video: ${r.videoUrl}\n   Category: ${r.category}`).join('\n\n')
+          : 'No reels found';
+        displayResponse('dbResponse', html, res.ok);
+      } catch (e) {
+        displayResponse('dbResponse', `Error: ${e.message}`, false);
+      }
+    }
+
+    async function testVideoUrls() {
+      try {
+        const res = await fetch(`${getApiBase()}/api/reels`, {
+          headers: { 'X-Student-Id': getStudentId() }
+        });
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) {
+          displayResponse('dbResponse', 'No reels found. Upload a reel first.', false);
+          return;
+        }
+        
+        const urls = data.map((r, i) => ({
+          num: i + 1,
+          title: r.title,
+          url: r.videoUrl,
+          exists: r.videoUrl ? '✓' : '✗'
+        }));
+        
+        const html = urls.map(u => `${u.num}. ${u.exists} ${u.title}\n   ${u.url || 'NULL'}`).join('\n\n');
+        displayResponse('dbResponse', html, data.every(r => r.videoUrl));
+      } catch (e) {
+        displayResponse('dbResponse', `Error: ${e.message}`, false);
+      }
+    }
+
+    function testWebSocketConnection() {
+      try {
+        ws = new WebSocket(`ws://localhost:8085/ws/reels?userId=${getStudentId()}&role=STUDENT`);
+        ws.onopen = () => displayResponse('wsResponse', 'WebSocket connected!', true);
+        ws.onerror = (e) => displayResponse('wsResponse', `WebSocket error: ${e}`, false);
+        ws.onmessage = (e) => displayResponse('wsResponse', `Message: ${e.data}`, true);
+      } catch (e) {
+        displayResponse('wsResponse', `Error: ${e.message}`, false);
+      }
+    }
+
+    function testWebSocketMessage() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        displayResponse('wsResponse', 'WebSocket not connected', false);
+        return;
+      }
+      ws.send(JSON.stringify({ action: 'SUBSCRIBE_REEL', reelId: 'test' }));
+      displayResponse('wsResponse', 'Message sent', true);
+    }
+
+    function closeWebSocket() {
+      if (ws) {
+        ws.close();
+        displayResponse('wsResponse', 'WebSocket closed', true);
+      }
+    }
+
+    function displayResponse(id, text, success) {
+      const el = document.getElementById(id);
+      el.innerHTML = `<div class="${success ? 'success' : 'error'}">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
+    }
+  </script>
+</body>
+</html>

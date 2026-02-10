@@ -1,0 +1,875 @@
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import axios from 'axios';
+import {
+  ArrowLeft, Search, Users, Briefcase, BookOpen, Code2, Sparkles,
+  MapPin, Clock, Star, Heart, MessageCircle, Bookmark, BookmarkCheck,
+  ChevronRight, Filter, X, Eye, Send, GraduationCap, Trophy,
+  Zap, Globe, Shield, TrendingUp, Lightbulb, Target, Microscope,
+  Building2, Calendar, ExternalLink, Share2, ThumbsUp, Award,
+  Layers, UserPlus, FolderGit2, Rocket, BarChart3, Hash,
+  PlusCircle, Megaphone, FlaskConical, TrendingDown, Flame, Lightbulb as Ideas,
+  Brain, Wifi, AlertCircle, CheckCircle2, MessageSquare, ArrowRight, MoreHorizontal,
+  Pin, AlertCircle as Warning, Settings, Bell, Zap as ZapAlt, Users2, Bot,
+  UserCheck, Loader2, XCircle
+} from 'lucide-react';
+import ProfileModal from './ProfileModal.jsx';
+
+const API = import.meta.env.VITE_API_BASE ?? 'http://localhost:8085';
+
+/* ═══════════ Stable helpers ═══════════ */
+const tabs = [
+  { id: 'discover-people',        label: 'Find Talent',        icon: Users,       color: '#0d9488' },
+  { id: 'discover-opportunities', label: 'Post Opportunities',  icon: Rocket,      color: '#6366f1' },
+  { id: 'discover-feed',          label: 'Inspire & Share',     icon: BookOpen,    color: '#f59e0b' },
+  { id: 'discover-projects',      label: 'Student Projects',    icon: Code2,       color: '#8b5cf6' },
+  { id: 'discover-insights',      label: 'Analytics',           icon: BarChart3,   color: '#ec4899' },
+];
+
+const PEOPLE_FILTERS = ['All', 'Top Performers', 'Research-Oriented', 'Seeking Mentorship', 'Project Leaders'];
+const DEPT_OPTIONS = ['All', 'CSE', 'ECE', 'Mechanical', 'Civil', 'IT', 'AI/ML', 'Electronics'];
+const OPP_TYPES = ['All', 'Internship', 'Research', 'Teaching Assist', 'Mentorship', 'Collaboration', 'Workshop'];
+const FEED_TOPICS = ['All', 'Research Publications', 'Student Achievements', 'Collaborations', 'Guidance', 'Events', 'Announcements'];
+
+const avatar = (url, name, size = 'h-12 w-12') =>
+  url
+    ? <img src={`${API}${url}`} alt="" className={`${size} rounded-xl object-cover`} />
+    : <div className={`${size} flex items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-lg font-bold text-white`}>{(name || '?').charAt(0).toUpperCase()}</div>;
+
+/* ═══════════ ENHANCED MOCK DATA ═══════════ */
+const MOCK_FEED = [
+  { id: 1, author: 'Dr. Priya Sharma', avatar: '🔬', time: '1h', topic: 'Research Publications', title: '3 Papers Published at ICML 2025', description: 'Our lab published 3 papers on federated learning and edge AI. Looking for motivated students to join the research team.', type: 'Research Publications', likes: 124, comments: 18, isResearch: true, isPinned: true },
+  { id: 2, author: 'Prof. Anand Rao', avatar: '🎓', time: '4h', topic: 'Guidance', title: 'Mentorship Program Launch', description: 'Starting a new mentorship program to guide students in research and career development. Sign up as mentor to guide 2-3 students.', type: 'Guidance', likes: 89, comments: 12 },
+  { id: 3, author: 'Placement Cell', avatar: '🎯', time: '1d', topic: 'Student Achievements', title: 'Record 95% Placement - Congratulations!', description: '95+ students placed with median package of 12.5 LPA. Top performers from AI/ML and CSE branches leading the statistics.', type: 'Student Achievements', likes: 267, comments: 45 },
+  { id: 4, author: 'Innovation Hub', avatar: '💡', time: '2d', topic: 'Collaborations', title: 'Faculty-Student Joint Research Proposals', description: 'Call for collaborative research proposals between faculty and student teams. Funding up to ₹25 Lakhs available per project.', type: 'Collaborations', likes: 132, comments: 24 },
+  { id: 5, author: 'Dr. Meena K', avatar: '👩‍🏫', time: '3d', topic: 'Student Achievements', title: 'Arjun Wins National Coding Championship', description: 'Proud to announce Arjun (CSE-3) won the National Coding Championship. He is open to sharing his learning journey with peers.', type: 'Student Achievements', likes: 203, comments: 38 },
+  { id: 6, author: 'Events Team', avatar: '📅', time: '5d', topic: 'Events', title: 'Faculty Development Workshop', description: 'AI-Assisted Teaching & Research Tools workshop. Discover how to leverage AI for better student outcomes and publication impact.', type: 'Events', likes: 78, comments: 14 },
+];
+
+const MOCK_STUDENT_PROJECTS = [
+  { id: 1, name: 'Smart Health Monitoring System', owner: 'Rahul M. (ECE-3)', tech: ['IoT', 'Python', 'TensorFlow', 'Cloud'], domain: 'Healthcare', description: 'Wearable device tracking vital signs with ML-based anomaly detection. Real-time alert system integrated with mobile app.', members: 3, status: 'Active', needsGuidance: true, engagement: 'high' },
+  { id: 2, name: 'Automated Exam Proctoring', owner: 'Sneha R. (CSE-4)', tech: ['OpenCV', 'Django', 'PostgreSQL'], domain: 'EdTech', description: 'AI-powered exam monitoring system with cheating detection, emotion recognition, and real-time alerting for invigilators.', members: 4, status: 'Active', needsGuidance: false, engagement: 'medium' },
+  { id: 3, name: 'Carbon Footprint Tracker', owner: 'Vikram S. (IT-3)', tech: ['Flutter', 'Firebase', 'ML'], domain: 'Sustainability', description: 'Mobile app to track personal carbon footprint with AI-driven reduction recommendations and community challenges.', members: 3, status: 'Active', needsGuidance: true, engagement: 'high' },
+  { id: 4, name: 'Blockchain Credentials Verify', owner: 'Anitha P. (CSE-4)', tech: ['Solidity', 'React', 'IPFS'], domain: 'Blockchain', description: 'Tamper-proof university credential system on blockchain. Students can verify certificates independently.', members: 5, status: 'Completed', needsGuidance: false, engagement: 'medium' },
+  { id: 5, name: 'NLP Plagiarism Detection', owner: 'Karthik B. (AI-3)', tech: ['Python', 'BERT', 'FastAPI'], domain: 'AI/ML', description: 'Advanced plagiarism detection using transformers. Analyzes semantic similarity and paraphrasing detection.', members: 2, status: 'Active', needsGuidance: true, engagement: 'high' },
+];
+
+const MOCK_OPPORTUNITIES = [
+  { id: 1, type: 'Research', title: 'Research Assistant - Quantum ML', description: 'Join our QC research lab as research assistant. Working on quantum machine learning algorithms.', domain: 'Research', responsibility: 'High', stipend: '₹15,000/month', duration: '6 months' },
+  { id: 2, type: 'Internship', title: 'Industrial Internship - Cloud Computing', description: 'Internship with leading cloud provider. Work on distributed systems and DevOps.', domain: 'Cloud Tech', responsibility: 'Medium', stipend: '₹12,000/month', duration: '3 months' },
+  { id: 3, type: 'Mentorship', title: 'Mentor Student Startup', description: 'Guide and mentor 2-3 student startup teams on product development and pitching.', domain: 'Entrepreneurship', responsibility: 'Medium', stipend: 'Consulting hours', duration: 'Ongoing' },
+  { id: 4, type: 'Workshop', title: 'Conduct AI/ML Training Workshop', description: 'Design and conduct 2-week advanced workshop on modern AI techniques for students.', domain: 'AI/ML', responsibility: 'High', stipend: '₹5,000/hour', duration: '2 weeks' },
+];
+
+/* ══════════════════════════════════════════════════════════════════ */
+
+export default function FacultyDiscover({ email, onBack, onChat }) {
+  const [tab, setTab]           = useState('discover-people');
+  const [search, setSearch]     = useState('');
+  const [students, setStudents] = useState([]);
+  const [faculty, setFaculty]   = useState([]);
+  const [opps, setOpps]         = useState([]);
+  const [stats, setStats]       = useState({});
+  const [loading, setLoading]   = useState(false);
+
+  const [peopleFilter, setPeopleFilter]   = useState('All');
+  const [deptFilter, setDeptFilter]       = useState('All');
+  const [oppType, setOppType]             = useState('All');
+  const [feedTopic, setFeedTopic]         = useState('All');
+
+  const [liked, setLiked]   = useState(new Set());
+  const [saved, setSaved]   = useState(new Set());
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState('top');
+
+  /* Faculty-specific filters */
+  const [cgpaMin, setCgpaMin]           = useState('');
+  const [cgpaMax, setCgpaMax]           = useState('');
+  const [projectsFilter, setProjectsFilter] = useState(false);
+  const [researchFilterOn, setResearchFilterOn] = useState(false);
+
+  /* ─── follow & profile modal state ─── */
+  const [followStatuses, setFollowStatuses] = useState({});
+  const [profileModal, setProfileModal] = useState(null);
+  const [followRequests, setFollowRequests] = useState([]);
+  const [requestCount, setRequestCount] = useState(0);
+
+  /* ─── fetch ─── */
+  const fetchPeople = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [sRes, fRes] = await Promise.all([
+        axios.get(`${API}/api/discover/students`, { params: { q: search, department: deptFilter === 'All' ? '' : deptFilter, skill: '', excludeEmail: email } }),
+        axios.get(`${API}/api/discover/faculty`, { params: { q: search, department: deptFilter === 'All' ? '' : deptFilter, excludeEmail: email } }),
+      ]);
+      let sList = sRes.data;
+      if (cgpaMin) sList = sList.filter(s => s.cgpa >= parseFloat(cgpaMin));
+      if (cgpaMax) sList = sList.filter(s => s.cgpa <= parseFloat(cgpaMax));
+      if (projectsFilter) sList = sList.filter(s => (s.projects || 0) > 0);
+      if (researchFilterOn) sList = sList.filter(s => (s.researchInterest || false));
+      setStudents(sList);
+      setFaculty(fRes.data);
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  }, [search, deptFilter, cgpaMin, cgpaMax, projectsFilter, researchFilterOn, email]);
+
+  const fetchOpps = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`${API}/api/discover/opportunities`, { params: { q: search, type: oppType === 'All' ? '' : oppType } });
+      setOpps(data);
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  }, [search, oppType]);
+
+  const fetchStats = useCallback(async () => {
+    try { const { data } = await axios.get(`${API}/api/discover/stats`); setStats(data); } catch {}
+  }, []);
+
+  useEffect(() => { fetchStats(); }, [fetchStats]);
+  useEffect(() => { if (tab === 'discover-people') fetchPeople(); }, [tab, fetchPeople]);
+  useEffect(() => { if (tab === 'discover-opportunities') fetchOpps(); }, [tab, fetchOpps]);
+
+  /* ─── Bulk follow status fetch ─── */
+  useEffect(() => {
+    if (!email) return;
+    const allEmails = [...students, ...faculty].map(p => p.email).filter(Boolean);
+    if (allEmails.length === 0) return;
+    axios.post(`${API}/api/follow/status/bulk`, { email, targets: allEmails })
+      .then(r => setFollowStatuses(r.data || {}))
+      .catch(() => {});
+  }, [students, faculty, email]);
+
+  /* ─── Follow request count + list ─── */
+  const fetchFollowRequests = useCallback(() => {
+    if (!email) return;
+    axios.get(`${API}/api/follow/requests/received`, { params: { email } })
+      .then(r => { setFollowRequests(r.data || []); setRequestCount(r.data?.length || 0); })
+      .catch(() => {});
+  }, [email]);
+
+  useEffect(() => { fetchFollowRequests(); }, [fetchFollowRequests]);
+
+  /* ─── Follow action handler ─── */
+  const handleFollowAction = async (targetEmail, targetName, targetAvatarUrl, targetType, action) => {
+    try {
+      if (action === 'follow') {
+        await axios.post(`${API}/api/follow/request`, {
+          fromEmail: email, toEmail: targetEmail,
+          fromName: '', fromAvatarUrl: '', fromRole: 'FACULTY',
+          toName: targetName, toAvatarUrl: targetAvatarUrl, toRole: targetType?.toUpperCase() || 'STUDENT'
+        });
+        setFollowStatuses(prev => ({ ...prev, [targetEmail]: 'PENDING_SENT' }));
+      } else if (action === 'unfollow') {
+        await axios.delete(`${API}/api/follow/request`, { data: { fromEmail: email, toEmail: targetEmail } });
+        setFollowStatuses(prev => ({ ...prev, [targetEmail]: 'NONE' }));
+      } else if (action === 'accept' || action === 'reject') {
+        // Try to get request ID from followRequests list first, then from bulk status
+        const req = followRequests.find(r => r.fromEmail === targetEmail);
+        const bulkEntry = followStatuses[targetEmail];
+        const requestId = req?.id || (typeof bulkEntry === 'object' ? bulkEntry.id : null);
+        if (requestId) {
+          await axios.put(`${API}/api/follow/request/${requestId}`, { action });
+          setFollowStatuses(prev => ({ ...prev, [targetEmail]: action === 'accept' ? 'ACCEPTED' : 'NONE' }));
+          fetchFollowRequests();
+          // Re-fetch bulk statuses to sync
+          const allEmails = [...students, ...faculty].map(p => p.email).filter(Boolean);
+          if (allEmails.length > 0) {
+            axios.post(`${API}/api/follow/status/bulk`, { email, targets: allEmails })
+              .then(r => setFollowStatuses(r.data || {})).catch(() => {});
+          }
+        } else {
+          console.error('No request ID found for', targetEmail);
+        }
+      }
+    } catch (e) { console.error('Follow action failed', e); }
+  };
+
+  const getFollowStatus = (personEmail) => {
+    const entry = followStatuses[personEmail];
+    if (!entry) return 'NONE';
+    // bulk API returns { status, direction, id }
+    if (typeof entry === 'object') {
+      const { status, direction } = entry;
+      if (status === 'ACCEPTED') return 'ACCEPTED';
+      if (status === 'PENDING' && direction === 'sent') return 'PENDING_SENT';
+      if (status === 'PENDING' && direction === 'received') return 'PENDING_RECEIVED';
+      return 'NONE';
+    }
+    // direct string fallback from local optimistic update
+    if (entry === 'ACCEPTED') return 'ACCEPTED';
+    if (entry === 'PENDING_SENT') return 'PENDING_SENT';
+    if (entry === 'PENDING_RECEIVED') return 'PENDING_RECEIVED';
+    return 'NONE';
+  };
+
+  const toggleLike = id => setLiked(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleSave = id => setSaved(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  /* ─── filtered data ─── */
+  const filteredStudents = useMemo(() => {
+    let result = students;
+    if (peopleFilter === 'Top Performers') result = result.filter(s => s.cgpa >= 8);
+    if (peopleFilter === 'Research-Oriented') result = result.filter(s => s.researchInterest);
+    if (peopleFilter === 'Seeking Mentorship') result = result.filter(s => s.seeksMentorship);
+    if (peopleFilter === 'Project Leaders') result = result.filter(s => (s.projects || 0) > 0);
+    return result;
+  }, [students, peopleFilter]);
+
+  const feed = useMemo(() => feedTopic === 'All' ? MOCK_FEED : MOCK_FEED.filter(f => f.topic === feedTopic), [feedTopic]);
+
+  const trendingResearch = ['Federated Learning', 'Quantum Computing', 'Edge AI', 'Large Language Models', 'Computer Vision', 'Blockchain Applications'];
+  const trendingSkills = ['Machine Learning', 'Cloud Architecture', 'Full-Stack Development', 'Data Science', 'DevOps', 'System Design'];
+
+  /* ═══════════ RENDER SECTIONS ═══════════ */
+
+  /* ─── Enhanced People Discovery ─── */
+  const renderFindTalent = () => {
+    const getTitle = (s) => {
+      const parts = [];
+      if (s.branch) parts.push(s.branch);
+      if (s.year) parts.push(`Year ${s.year}`);
+      if (s.semester) parts.push(`Sem ${s.semester}`);
+      return parts.join(' · ') || 'Student';
+    };
+
+    const getInterests = (s) => {
+      const interests = [];
+      if (s.branch) interests.push(s.branch);
+      if (s.cgpa >= 8) interests.push('Academic Excellence');
+      if ((s.projects || 0) > 0) interests.push('Project Building');
+      if ((s.certificates || 0) > 0) interests.push('Certifications');
+      if ((s.internships || 0) > 0) interests.push('Industry Experience');
+      return interests;
+    };
+
+    const formatCount = (n) => {
+      if (!n || n === 0) return '0';
+      if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+      return String(n);
+    };
+
+    return (
+      <div className="space-y-5">
+        {/* Filter Section */}
+        <div className="rounded-2xl border border-teal-100 bg-gradient-to-r from-teal-50 to-white p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-teal-900">Smart Talent Discovery</h3>
+            <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-teal-700">
+              <Filter size={14} /> Advanced Filters
+            </button>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            {PEOPLE_FILTERS.map(f => (
+              <button key={f} onClick={() => setPeopleFilter(f)}
+                className={`rounded-xl px-4 py-2 text-xs font-semibold transition duration-300 ${peopleFilter === f ? 'bg-teal-600 text-white shadow-lg scale-105' : 'bg-white text-slate-600 hover:bg-teal-100'}`}>
+                {f}
+              </button>
+            ))}
+          </div>
+
+          {showFilters && (
+            <div className="mt-5 grid gap-4 rounded-2xl border border-teal-200 bg-white p-5 sm:grid-cols-2 lg:grid-cols-5 animate-fadeIn">
+              <div>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-teal-600">Department</label>
+                <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)}
+                  className="w-full rounded-lg border border-teal-200 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20">
+                  {DEPT_OPTIONS.map(d => <option key={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-teal-600">Min CGPA</label>
+                <input type="number" step="0.1" min="0" max="10" value={cgpaMin} onChange={e => setCgpaMin(e.target.value)} placeholder="0.0"
+                  className="w-full rounded-lg border border-teal-200 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20" />
+              </div>
+              <div>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-teal-600">Max CGPA</label>
+                <input type="number" step="0.1" min="0" max="10" value={cgpaMax} onChange={e => setCgpaMax(e.target.value)} placeholder="10.0"
+                  className="w-full rounded-lg border border-teal-200 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20" />
+              </div>
+              <div>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-teal-600">Options</label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={projectsFilter} onChange={e => setProjectsFilter(e.target.checked)} className="rounded" />
+                    <span className="text-xs text-slate-600">Has Projects</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={researchFilterOn} onChange={e => setResearchFilterOn(e.target.checked)} className="rounded" />
+                    <span className="text-xs text-slate-600">Research Int.</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* People Grid — Profile Card Design */}
+        {loading ? <LoadingSkeleton count={3} /> : filteredStudents.length === 0
+          ? <EmptyBox icon={Users} title="No students matched" sub="Adjust filters to discover more talent" />
+          : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredStudents.map((s, idx) => {
+                const skills = (s.skills || []);
+                const interests = getInterests(s);
+                const fStatus = getFollowStatus(s.email);
+
+                const renderCardButton = () => {
+                  if (fStatus === 'ACCEPTED') return (
+                    <button onClick={e => { e.stopPropagation(); onChat && onChat(); }}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white shadow-md transition hover:bg-emerald-700 active:scale-95">
+                      <MessageCircle size={16} /> Chat
+                    </button>
+                  );
+                  if (fStatus === 'PENDING_SENT') return (
+                    <button disabled className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
+                      <Clock size={16} /> Requested
+                    </button>
+                  );
+                  if (fStatus === 'PENDING_RECEIVED') return (
+                    <div className="flex w-full gap-2">
+                      <button onClick={e => { e.stopPropagation(); handleFollowAction(s.email, s.name, s.avatarUrl, 'student', 'accept'); }}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white shadow-md transition hover:bg-emerald-700 active:scale-95">
+                        <CheckCircle2 size={16} /> Accept
+                      </button>
+                      <button onClick={e => { e.stopPropagation(); handleFollowAction(s.email, s.name, s.avatarUrl, 'student', 'reject'); }}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 text-sm font-bold text-red-500 shadow-sm transition hover:bg-red-50 hover:border-red-200 active:scale-95">
+                        <XCircle size={16} /> Decline
+                      </button>
+                    </div>
+                  );
+                  return (
+                    <button onClick={e => { e.stopPropagation(); handleFollowAction(s.email, s.name, s.avatarUrl, 'student', 'follow'); }}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 text-sm font-bold text-white shadow-md transition hover:bg-teal-700 active:scale-95">
+                      <UserPlus size={16} /> Follow
+                    </button>
+                  );
+                };
+
+                return (
+                  <div key={s.id} onClick={() => setProfileModal({ email: s.email, type: 'student' })}
+                    className="group cursor-pointer rounded-2xl border border-slate-200/60 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:border-teal-200 hover:-translate-y-1 overflow-hidden" style={{ animationDelay: `${idx * 60}ms` }}>
+                    {/* Card Content — Centered Layout */}
+                    <div className="flex flex-col items-center px-6 pt-7 pb-2 text-center">
+                      {/* Avatar */}
+                      {s.avatarUrl
+                        ? <img src={`${API}${s.avatarUrl}`} alt={s.name} className="h-20 w-20 rounded-full object-cover ring-4 ring-teal-50 shadow-md" />
+                        : <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 text-2xl font-bold text-white ring-4 ring-teal-50 shadow-md">
+                            {(s.name || '?').charAt(0).toUpperCase()}
+                          </div>
+                      }
+
+                      {/* Name & Title */}
+                      <h4 className="mt-4 text-lg font-extrabold text-slate-900">{s.name || 'Unknown'}</h4>
+                      <p className="mt-0.5 text-sm font-medium text-teal-600">{getTitle(s)}</p>
+
+                      {/* Bio */}
+                      {s.bio && <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-slate-500">{s.bio}</p>}
+
+                      {/* Follow Status Badge */}
+                      <div className="mt-4 flex items-center justify-center gap-8 w-full border-t border-slate-100 pt-4">
+                        {fStatus === 'ACCEPTED' && (
+                          <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600"><UserCheck size={14} /> Connected</span>
+                        )}
+                        {fStatus === 'PENDING_SENT' && (
+                          <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-600"><Clock size={14} /> Pending</span>
+                        )}
+                        {fStatus === 'PENDING_RECEIVED' && (
+                          <span className="flex items-center gap-1.5 text-xs font-semibold text-teal-600"><Bell size={14} /> Wants to connect</span>
+                        )}
+                        {(fStatus === 'NONE' || !fStatus) && (
+                          <span className="text-xs text-slate-400">Click to view profile</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Skills */}
+                    {skills.length > 0 && (
+                      <div className="px-6 pt-4">
+                        <p className="text-xs font-semibold text-slate-500 mb-2">Skills</p>
+                        <div className="flex flex-wrap gap-2">
+                          {skills.slice(0, 2).map((sk, i) => (
+                            <span key={i} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">{sk}</span>
+                          ))}
+                          {skills.length > 2 && <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-400">+{skills.length - 2} more</span>}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Interests */}
+                    {interests.length > 0 && (
+                      <div className="px-6 pt-3">
+                        <p className="text-xs font-semibold text-slate-500 mb-2">Interests</p>
+                        <div className="flex flex-wrap gap-2">
+                          {interests.slice(0, 3).map((int, i) => (
+                            <span key={i} className="rounded-full border border-pink-200 bg-pink-50 px-3 py-1 text-xs font-medium text-pink-600">{int}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Follow / Chat Button */}
+                    <div className="px-6 pt-5 pb-6">
+                      {renderCardButton()}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>}
+      </div>
+    );
+  };
+
+  /* ─── Post Opportunities ─── */
+  const renderPostOpportunities = () => (
+    <div className="space-y-5">
+      {/* Post New CTA */}
+      <div className="flex items-center justify-between rounded-3xl border-2 border-dashed border-indigo-300 bg-gradient-to-r from-indigo-50 to-blue-50 p-6">
+        <div>
+          <h4 className="text-sm font-bold text-indigo-900">Create New Opportunity</h4>
+          <p className="text-xs text-indigo-700">Share internships, research positions, workshops or collaboration offers</p>
+        </div>
+        <button className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-xs font-bold text-white shadow-lg transition hover:bg-indigo-700 active:scale-95">
+          <PlusCircle size={16} /> Post Now
+        </button>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {OPP_TYPES.map(t => (
+          <button key={t} onClick={() => setOppType(t)}
+            className={`rounded-xl px-4 py-2 text-xs font-semibold transition duration-300 ${oppType === t ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-600 hover:bg-indigo-100 border border-slate-200'}`}>
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* Opportunities Grid */}
+      {opps.length === 0
+        ? <div className="rounded-3xl border-2 border-dashed border-slate-200 px-6 py-12 text-center">
+            <Briefcase size={32} className="mx-auto mb-3 text-slate-300" />
+            <p className="font-semibold text-slate-600">No opportunities posted yet</p>
+            <p className="text-sm text-slate-500">Create an opportunity to attract talented students</p>
+          </div>
+        : <div className="grid gap-4 sm:grid-cols-2">
+            {(MOCK_OPPORTUNITIES || opps).map((o, idx) => (
+              <div key={o.id} className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition duration-300 hover:border-indigo-300 hover:shadow-xl hover:scale-105" style={{ animationDelay: `${idx * 100}ms` }}>
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${o.type === 'Research' ? 'bg-violet-100 text-violet-700' : o.type === 'Internship' ? 'bg-blue-100 text-blue-700' : o.type === 'Mentorship' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {o.type}
+                      </span>
+                    </div>
+                    <h4 className="mt-2 text-sm font-bold text-slate-900">{o.title}</h4>
+                  </div>
+                </div>
+                <p className="text-xs leading-relaxed text-slate-600 mb-3">{o.description}</p>
+                
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {o.domain && <span className="rounded-md bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-700">{o.domain}</span>}
+                  {o.responsibility && <span className="rounded-md bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-700">Responsibility: {o.responsibility}</span>}
+                </div>
+
+                <div className="space-y-2 mb-4 text-[10px] font-semibold text-slate-600">
+                  {o.stipend && <div className="flex items-center gap-2"><Zap size={11} className="text-amber-500" /> {o.stipend}</div>}
+                  {o.duration && <div className="flex items-center gap-2"><Clock size={11} className="text-blue-500" /> {o.duration}</div>}
+                </div>
+
+                <div className="flex gap-2">
+                  <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 py-2 text-xs font-bold text-white transition hover:bg-indigo-700 active:scale-95">
+                    <Eye size={13} /> View Details
+                  </button>
+                  <button className="flex items-center justify-center rounded-xl border-2 border-slate-200 px-3 py-2 text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600 active:scale-95">
+                    <Share2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>}
+    </div>
+  );
+
+  /* ─── Inspire & Share (Content Feed) ─── */
+  const renderInspireShare = () => (
+    <div className="space-y-5">
+      {/* Post CTA */}
+      <div className="flex items-center justify-between rounded-3xl border-2 border-dashed border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-6">
+        <div>
+          <h4 className="text-sm font-bold text-amber-900">Share Your Insights</h4>
+          <p className="text-xs text-amber-700">Post research updates, student achievements, or teaching innovations</p>
+        </div>
+        <button className="flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-xs font-bold text-white shadow-lg transition hover:bg-amber-600 active:scale-95">
+          <PlusCircle size={16} /> Create Post
+        </button>
+      </div>
+
+      {/* Topic Filter */}
+      <div className="flex flex-wrap gap-2">
+        {FEED_TOPICS.map(t => (
+          <button key={t} onClick={() => setFeedTopic(t)}
+            className={`rounded-xl px-4 py-2 text-xs font-semibold transition duration-300 ${feedTopic === t ? 'bg-amber-500 text-white shadow-lg' : 'bg-white text-slate-600 hover:bg-amber-100 border border-slate-200'}`}>
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* Feed */}
+      {feed.length === 0
+        ? <EmptyBox icon={BookOpen} title="No posts yet" sub="Be the first to share an update" />
+        : <div className="space-y-4">
+            {feed.map((f, idx) => (
+              <div key={f.id} className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition duration-300 hover:shadow-xl hover:border-amber-200" style={{ animationDelay: `${idx * 100}ms` }}>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-lg">{f.avatar}</div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-800">{f.author}</h4>
+                      <p className="text-[10px] text-slate-500">{f.time} ago · <span className="font-semibold text-amber-600">{f.topic}</span></p>
+                    </div>
+                  </div>
+                  {f.isPinned && <span className="flex items-center gap-1 rounded-lg bg-amber-100 px-2 py-1 text-[10px] font-bold text-amber-700"><Pin size={11} /> Pinned</span>}
+                </div>
+
+                <h3 className="text-base font-bold text-slate-900 mb-2">{f.title}</h3>
+                <p className="text-sm leading-relaxed text-slate-600 mb-4">{f.description}</p>
+
+                <div className="flex items-center gap-4 border-t border-slate-100 pt-3">
+                  <button onClick={() => toggleLike(`feed-${f.id}`)} className={`flex items-center gap-1.5 text-xs font-semibold transition duration-200 ${liked.has(`feed-${f.id}`) ? 'text-rose-500' : 'text-slate-500 hover:text-rose-400'}`}>
+                    <Heart size={14} fill={liked.has(`feed-${f.id}`) ? 'currentColor' : 'none'} /> {f.likes}
+                  </button>
+                  <button className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-600 transition">
+                    <MessageCircle size={14} /> {f.comments}
+                  </button>
+                  <button onClick={() => toggleSave(`feed-${f.id}`)} className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-amber-500 transition">
+                    {saved.has(`feed-${f.id}`) ? <BookmarkCheck size={14} className="text-amber-500" /> : <Bookmark size={14} />}
+                  </button>
+                  <button className="ml-auto flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-600 transition">
+                    <Share2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>}
+    </div>
+  );
+
+  /* ─── Student Projects Discovery ─── */
+  const renderStudentProjects = () => (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-bold text-slate-900">Discover Student Projects</h3>
+          <p className="text-xs text-slate-500 mt-1">Find projects seeking mentorship and collaboration</p>
+        </div>
+        <button className="rounded-xl bg-violet-600 px-5 py-2.5 text-xs font-bold text-white transition hover:bg-violet-700 active:scale-95 flex items-center gap-2">
+          <FlaskConical size={14} /> Post Research Opp
+        </button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {MOCK_STUDENT_PROJECTS.map((p, idx) => (
+          <div key={p.id} className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition duration-300 hover:border-violet-300 hover:shadow-xl hover:scale-105" style={{ animationDelay: `${idx * 100}ms` }}>
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">{p.name}</h4>
+                <p className="text-xs text-slate-500 mt-0.5">{p.owner}</p>
+              </div>
+              <div className="flex gap-1.5">
+                {p.needsGuidance && <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700 flex items-center gap-1"><AlertCircle size={10} /> Needs Mentor</span>}
+                <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${p.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>{p.status}</span>
+              </div>
+            </div>
+
+            <p className="text-xs leading-relaxed text-slate-600 mb-3">{p.description}</p>
+
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {p.tech.map((t, i) => <span key={i} className="rounded-md bg-violet-50 px-2.5 py-1 text-[10px] font-semibold text-violet-700">{t}</span>)}
+            </div>
+
+            <div className="rounded-lg bg-slate-50 px-3 py-2 mb-3 text-[10px] font-semibold text-slate-600">
+              {p.members} team members • {p.domain}
+            </div>
+
+            <div className="flex gap-2">
+              {p.needsGuidance && (
+                <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-teal-600 py-2 text-xs font-bold text-white transition hover:bg-teal-700 active:scale-95">
+                  <Microscope size={13} /> Mentor
+                </button>
+              )}
+              <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border-2 border-violet-200 py-2 text-xs font-bold text-violet-700 transition hover:bg-violet-50 active:scale-95">
+                <Eye size={13} /> Details
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  /* ─── Analytics & Insights ─── */
+  const renderAnalytics = () => (
+    <div className="space-y-5">
+      {/* Key Metrics */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center gap-2 text-emerald-700 mb-2"><GraduationCap size={18} /><span className="text-[10px] font-bold uppercase tracking-wider">Students</span></div>
+          <p className="text-3xl font-black text-emerald-700">{stats.totalStudents || 0}</p>
+          <p className="text-[10px] text-slate-500 mt-1">Active in platform</p>
+        </div>
+        <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-white p-5 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center gap-2 text-teal-700 mb-2"><Building2 size={18} /><span className="text-[10px] font-bold uppercase tracking-wider">Faculty</span></div>
+          <p className="text-3xl font-black text-teal-700">{stats.totalFaculty || 0}</p>
+          <p className="text-[10px] text-slate-500 mt-1">Available for mentoring</p>
+        </div>
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-5 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center gap-2 text-indigo-700 mb-2"><Briefcase size={18} /><span className="text-[10px] font-bold uppercase tracking-wider">Opportunities</span></div>
+          <p className="text-3xl font-black text-indigo-700">{stats.totalOpportunities || 0}</p>
+          <p className="text-[10px] text-slate-500 mt-1">Open positions</p>
+        </div>
+        <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center gap-2 text-violet-700 mb-2"><FolderGit2 size={18} /><span className="text-[10px] font-bold uppercase tracking-wider">Projects</span></div>
+          <p className="text-3xl font-black text-violet-700">{MOCK_STUDENT_PROJECTS.length}</p>
+          <p className="text-[10px] text-slate-500 mt-1">Student projects active</p>
+        </div>
+      </div>
+
+      {/* Top Performing Students */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100"><Trophy size={16} className="text-amber-600" /></div>
+          <h3 className="text-sm font-bold text-slate-900">Top Performing Students (CGPA ≥ 8.0)</h3>
+        </div>
+        {students.length === 0 ? <p className="text-xs text-slate-500">No student data available yet</p> : (
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {students.filter(s => s.cgpa >= 8).sort((a, b) => b.cgpa - a.cgpa).slice(0, 6).map((s, i) => (
+              <div key={s.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition hover:bg-amber-50">
+                <span className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-black ${i === 0 ? 'bg-amber-100 text-amber-600' : i === 1 ? 'bg-slate-200 text-slate-600' : i === 2 ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'}`}>{i + 1}</span>
+                {avatar(s.avatarUrl, s.name, 'h-9 w-9')}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-bold text-slate-800">{s.name}</p>
+                  <p className="truncate text-[10px] text-slate-500">{s.branch} · Year {s.year}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-emerald-600">{s.cgpa}</p>
+                  <p className="text-[10px] text-slate-500">CGPA</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Trending Research & Skills */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100"><TrendingUp size={16} className="text-violet-600" /></div>
+            <h3 className="text-sm font-bold text-slate-900">Trending Research Topics</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {trendingResearch.map((t, i) => (
+              <span key={i} className="rounded-xl bg-gradient-to-r from-violet-50 to-indigo-50 px-3.5 py-2 text-xs font-semibold text-violet-700 shadow-sm">{t}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100"><Zap size={16} className="text-emerald-600" /></div>
+            <h3 className="text-sm font-bold text-slate-900">In-Demand Skills</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {trendingSkills.map((s, i) => (
+              <span key={i} className="rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 px-3.5 py-2 text-xs font-semibold text-emerald-700 shadow-sm">{s}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Projects Seeking Mentorship */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-100"><Lightbulb size={16} className="text-pink-600" /></div>
+          <h3 className="text-sm font-bold text-slate-900">Projects Seeking Mentorship</h3>
+        </div>
+        {MOCK_STUDENT_PROJECTS.filter(p => p.needsGuidance).length === 0 ? <p className="text-xs text-slate-500">No pending requests</p> : (
+          <div className="space-y-2">
+            {MOCK_STUDENT_PROJECTS.filter(p => p.needsGuidance).map(p => (
+              <div key={p.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition hover:bg-slate-50">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50"><FolderGit2 size={16} className="text-violet-600" /></div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-bold text-slate-800">{p.name}</p>
+                  <p className="truncate text-[10px] text-slate-500">{p.owner} · {p.members} members</p>
+                </div>
+                <button className="rounded-lg bg-teal-600 px-3 py-1.5 text-[10px] font-bold text-white transition hover:bg-teal-700 active:scale-95">Mentor</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  /* ═══════════ MAIN LAYOUT ═══════════ */
+  return (
+    <div className="min-h-screen bg-[#f8fafc]">
+      {/* Sticky Top Bar */}
+      <div className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+          <button onClick={onBack} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 active:scale-95">
+            <ArrowLeft size={18} /> Dashboard
+          </button>
+          <h1 className="text-base font-bold text-slate-900">Faculty Discovery Hub</h1>
+          <div className="w-24" />
+        </div>
+      </div>
+
+      {/* Hero Section */}
+      <div className="relative overflow-hidden py-10 bg-gradient-to-r from-teal-600 via-emerald-500 to-cyan-600">
+        <div className="absolute inset-0 opacity-20">
+          <div style={{ backgroundImage: 'radial-gradient(circle at 30% 50%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 70% 50%, rgba(255,255,255,0.1) 0%, transparent 50%)', backgroundSize: '40px 40px' }} className="h-full" />
+        </div>
+
+        <div className="relative mx-auto max-w-7xl px-6 text-center">
+          <h2 className="text-3xl font-black text-white sm:text-4xl">Faculty Discovery Hub</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-base text-white/80">Discover talented students, launch opportunities, share insights, and build meaningful collaborations</p>
+
+          {/* Enhanced Search */}
+          <div className="mx-auto mt-7 max-w-2xl">
+            <div className="flex items-center gap-3 rounded-2xl bg-white/95 px-5 py-3.5 shadow-2xl backdrop-blur-sm">
+              <Search size={20} className="text-slate-400" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search students, projects, opportunities…"
+                className="flex-1 bg-transparent text-base text-slate-900 outline-none placeholder:text-slate-400" />
+              {search && <button onClick={() => setSearch('')} className="text-slate-400 hover:text-slate-600 transition"><X size={18} /></button>}
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="mt-8 flex justify-center flex-wrap gap-4">
+            {[
+              { label: 'Students', value: stats.totalStudents || 0, icon: GraduationCap },
+              { label: 'Faculty', value: stats.totalFaculty || 0, icon: Building2 },
+              { label: 'Projects', value: MOCK_STUDENT_PROJECTS.length, icon: Code2 },
+              { label: 'Opportunities', value: stats.totalOpportunities || 0, icon: Rocket },
+            ].map(s => (
+              <div key={s.label} className="flex items-center gap-2.5 rounded-xl bg-white/20 px-5 py-2.5 backdrop-blur-sm border border-white/30 transition hover:bg-white/30">
+                <s.icon size={18} className="text-white" />
+                <div>
+                  <span className="block text-lg font-black text-white">{s.value}</span>
+                  <span className="text-xs text-white/70">{s.label}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="sticky top-[56px] z-30 border-b border-slate-200/80 bg-white">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex gap-1 overflow-x-auto px-6 py-3">
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={`shrink-0 flex items-center gap-2.5 rounded-xl px-5 py-2.5 text-xs font-semibold transition duration-300 ${tab === t.id ? 'text-white shadow-lg scale-105' : 'text-slate-600 hover:bg-slate-100'}`}
+                style={tab === t.id ? { background: t.color } : {}}>
+                <t.icon size={16} /> {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        {/* Follow Requests Banner */}
+        {requestCount > 0 && tab === 'discover-people' && (
+          <div className="mb-6 rounded-2xl border border-teal-200 bg-gradient-to-r from-teal-50 to-emerald-50 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100">
+                  <Bell size={18} className="text-teal-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-teal-900">Follow Requests</h3>
+                  <p className="text-xs text-teal-600/70">{requestCount} pending request{requestCount !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {followRequests.slice(0, 5).map(req => (
+                <div key={req.id} className="flex items-center gap-4 rounded-xl bg-white p-3 shadow-sm">
+                  {req.fromAvatarUrl
+                    ? <img src={`${API}${req.fromAvatarUrl}`} alt="" className="h-10 w-10 rounded-full object-cover" />
+                    : <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 text-sm font-bold text-white">{(req.fromName || '?').charAt(0).toUpperCase()}</div>
+                  }
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-800 truncate">{req.fromName || req.fromEmail}</p>
+                    <p className="text-[10px] text-slate-500">{req.fromRole?.toLowerCase()}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleFollowAction(req.fromEmail, req.fromName, req.fromAvatarUrl, req.fromRole, 'accept')}
+                      className="rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-teal-700 active:scale-95">
+                      Accept
+                    </button>
+                    <button onClick={() => handleFollowAction(req.fromEmail, req.fromName, req.fromAvatarUrl, req.fromRole, 'reject')}
+                      className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-red-50 hover:border-red-200 hover:text-red-600 active:scale-95">
+                      Decline
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'discover-people'        && renderFindTalent()}
+        {tab === 'discover-opportunities' && renderPostOpportunities()}
+        {tab === 'discover-feed'          && renderInspireShare()}
+        {tab === 'discover-projects'      && renderStudentProjects()}
+        {tab === 'discover-insights'      && renderAnalytics()}
+      </div>
+
+      {/* Profile Modal */}
+      {profileModal && (
+        <ProfileModal
+          personEmail={profileModal.email}
+          personType={profileModal.type}
+          currentEmail={email}
+          followStatus={getFollowStatus(profileModal.email)}
+          onClose={() => setProfileModal(null)}
+          onChat={() => { setProfileModal(null); onChat && onChat(); }}
+          onFollowAction={async (action) => {
+            await handleFollowAction(profileModal.email, '', '', profileModal.type, action);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ═══════════ Shared Sub-components ═══════════ */
+function EmptyBox({ icon: Ic, title, sub }) {
+  return (
+    <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-slate-200 py-14 text-center">
+      <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100"><Ic size={24} className="text-slate-300" /></div>
+      <p className="text-sm font-semibold text-slate-500">{title}</p>
+      {sub && <p className="mt-1 text-xs text-slate-400">{sub}</p>}
+    </div>
+  );
+}
+
+function LoadingSkeleton({ count = 3 }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="animate-pulse rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="flex gap-3">
+            <div className="h-12 w-12 rounded-xl bg-slate-200" />
+            <div className="flex-1 space-y-2 py-1"><div className="h-3 w-3/4 rounded bg-slate-200" /><div className="h-2 w-1/2 rounded bg-slate-200" /></div>
+          </div>
+          <div className="mt-4 space-y-2"><div className="h-2 rounded bg-slate-200" /><div className="h-2 w-5/6 rounded bg-slate-200" /></div>
+        </div>
+      ))}
+    </div>
+  );
+}
