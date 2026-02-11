@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth/student")
-@CrossOrigin(origins = {"http://localhost:4173", "http://localhost:5173"})
+@CrossOrigin(origins = {"https://klh-uniconnect.onrender.com", "https://*.vercel.app", "http://localhost:4173", "http://localhost:5173"})
 public class StudentAuthController {
     private final StudentAuthService studentAuthService;
 
