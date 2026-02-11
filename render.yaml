@@ -2,10 +2,10 @@ services:
   # Backend Service
   - type: web
     name: klh-uniconnect-backend
-    runtime: java
+    runtime: docker
     plan: free
-    buildCommand: "cd KLH-uniconnect/backend && mvn clean package -DskipTests"
-    startCommand: "cd KLH-uniconnect/backend && java -jar target/backend-0.1.0.jar"
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
