@@ -81,8 +81,8 @@ const FacultyAcademics = ({ email = '', onBack = () => {} }) => {
             <ArrowLeft className="h-5 w-5" />
             Back to Dashboard
           </button>
-          <h1 className="text-3xl font-black text-slate-900">Academics Management</h1>
-          <p className="mt-1 text-slate-600">Create materials, assign work, track attendance & grades</p>
+          <h1 className="text-xl font-bold text-slate-900">Academics Management</h1>
+          <p className="mt-0.5 text-sm text-slate-500">Create materials, assign work, track attendance & grades</p>
         </div>
       </header>
 

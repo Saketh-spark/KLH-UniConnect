@@ -293,7 +293,16 @@ const FacultyAssignments = ({ selectedSubject, setSelectedSubject, searchTerm })
 
   const filteredAssignments = assignments
     .filter(a => selectedSubject === 'all' || a.subject === selectedSubject)
-    .filter(a => a.title?.toLowerCase().includes((searchTerm || '').toLowerCase()));
+    .filter(a => a.title?.toLowerCase().includes((searchTerm || '').toLowerCase()))
+    .sort((a, b) => {
+      // Recently created first, most overdue last
+      const aOverdue = (a.overdue || 0) > 0;
+      const bOverdue = (b.overdue || 0) > 0;
+      if (aOverdue && !bOverdue) return 1;
+      if (!aOverdue && bOverdue) return -1;
+      if (aOverdue && bOverdue) return (a.overdue || 0) - (b.overdue || 0);
+      return new Date(b.createdAt || b.dueDate || 0) - new Date(a.createdAt || a.dueDate || 0);
+    });
 
   const getStatusColor = (assignment) => {
     if (assignment.overdue > 0) return 'red';

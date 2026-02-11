@@ -210,7 +210,7 @@ const FacultyNotesAndMaterials = ({ selectedSubject = 'all', setSelectedSubject,
     (selectedSubject === 'all' || m.subject?.toLowerCase().includes(selectedSubject.toLowerCase())) &&
     (m.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
      m.subject?.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  ).sort((a, b) => new Date(b.uploadDate || b.createdAt || b.date || 0) - new Date(a.uploadDate || a.createdAt || a.date || 0));
 
   return (
     <div className="space-y-6">

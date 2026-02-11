@@ -36,15 +36,36 @@ public class ChatController {
 
     // Get or create conversation
     @PostMapping("/conversations")
-    public ResponseEntity<ConversationResponse> getOrCreateConversation(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> getOrCreateConversation(@RequestBody Map<String, String> request) {
         try {
             String userId1 = request.get("userId1");
             String userId2 = request.get("userId2");
+            
+            // Enforce mutual follow requirement
+            if (!chatService.areMutuallyFollowing(userId1, userId2)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "MUTUAL_FOLLOW_REQUIRED",
+                                 "message", "You can start chatting once both users follow each other."));
+            }
+            
             ConversationResponse conversation = chatService.getOrCreateConversation(userId1, userId2);
             return ResponseEntity.ok(conversation);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Check mutual follow status for chat eligibility
+    @GetMapping("/can-chat")
+    public ResponseEntity<Map<String, Object>> canChat(
+            @RequestParam String email1,
+            @RequestParam String email2) {
+        try {
+            boolean canChat = chatService.areMutuallyFollowing(email1, email2);
+            return ResponseEntity.ok(Map.of("canChat", canChat));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("canChat", false));
         }
     }
 

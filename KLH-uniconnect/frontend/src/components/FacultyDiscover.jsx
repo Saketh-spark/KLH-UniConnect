@@ -412,7 +412,7 @@ export default function FacultyDiscover({ email, onBack, onChat }) {
 
                 const renderBtn = () => {
                   if (fStatus === 'ACCEPTED') return (
-                    <button onClick={e => { e.stopPropagation(); onChat?.(); }}
+                    <button onClick={e => { e.stopPropagation(); onChat?.(s.email); }}
                       className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white shadow-md transition hover:bg-emerald-700 active:scale-95">
                       <MessageCircle size={16} /> Chat
                     </button>);
@@ -1061,7 +1061,7 @@ export default function FacultyDiscover({ email, onBack, onChat }) {
       {profileModal && (
         <ProfileModal personEmail={profileModal.email} personType={profileModal.type} currentEmail={email}
           followStatus={getFollowStatus(profileModal.email)} onClose={() => setProfileModal(null)}
-          onChat={() => { setProfileModal(null); onChat?.(); }}
+          onChat={() => { setProfileModal(null); onChat?.(profileModal.email); }}
           onFollowAction={async (action) => { await handleFollowAction(profileModal.email, '', '', profileModal.type, action); }} />
       )}
     </div>

@@ -7,6 +7,8 @@ import {
   Globe, Moon, Sun, Bell, Lock, CheckCircle2, TrendingUp, Zap,
   ExternalLink, Sparkles, ChevronRight, Clock, Percent
 } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const API = import.meta.env.VITE_API_BASE ?? 'http://localhost:8085';
 
@@ -42,8 +44,8 @@ const EmptyState = ({ icon: Ic, title, sub }) => (
 
 /* ══════════ Main Component ══════════ */
 
-export default function StudentProfile({ email, onBack }) {
-  const [tab, setTab]         = useState('personal');
+export default function StudentProfile({ email, onBack, defaultTab }) {
+  const [tab, setTab]         = useState(defaultTab || 'personal');
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]   = useState(false);
@@ -51,6 +53,8 @@ export default function StudentProfile({ email, onBack }) {
   const [form, setForm]       = useState({});
   const [toast, setToast]     = useState('');
   const [uploading, setUploading] = useState(false);
+  const { theme: globalTheme, setTheme: setGlobalTheme } = useTheme();
+  const { language: globalLanguage, setLanguage: setGlobalLanguage, t } = useLanguage();
 
   const tabs = [
     { id: 'personal',  label: 'Personal',  icon: User },
@@ -65,10 +69,18 @@ export default function StudentProfile({ email, onBack }) {
     setLoading(true);
     try {
       const { data } = await axios.get(`${API}/api/students/profile`, { params: { email } });
-      setProfile(data); setForm(structuredClone(data));
+      setProfile(data);
+      // Normalize theme to lowercase for consistency with context
+      const normalized = structuredClone(data);
+      if (normalized.theme === 'Light' || normalized.theme === 'Dark') {
+        normalized.theme = normalized.theme.toLowerCase();
+      }
+      if (!normalized.theme) normalized.theme = globalTheme;
+      if (!normalized.language) normalized.language = globalLanguage;
+      setForm(normalized);
     } catch (e) { console.error(e); }
     setLoading(false);
-  }, [email]);
+  }, [email, globalTheme, globalLanguage]);
 
   useEffect(() => { fetch_(); }, [fetch_]);
 
@@ -82,7 +94,7 @@ export default function StudentProfile({ email, onBack }) {
     setSaving(false);
   };
 
-  const notify = t => { setToast(t); setTimeout(() => setToast(''), 3500); };
+  const notify = msg => { setToast(msg); setTimeout(() => setToast(''), 3500); };
 
   /* ─── uploads ─── */
   const upload = async (e, field) => {
@@ -570,7 +582,7 @@ export default function StudentProfile({ email, onBack }) {
   const renderSettings = () => (
     <div className="space-y-5">
       <Card>
-        <SectionTitle icon={Camera} title="Profile Photo" color="blue" />
+        <SectionTitle icon={Camera} title={t('settings.profilePhoto')} color="blue" />
         <div className="flex items-center gap-6">
           <div className="relative">
             <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-2xl font-bold text-white shadow-md shadow-indigo-500/20">
@@ -579,30 +591,30 @@ export default function StudentProfile({ email, onBack }) {
           </div>
           <div>
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-700">
-              <Camera size={14} /> Change Photo<input type="file" accept="image/*" className="hidden" onChange={e => upload(e, 'avatarUrl')} />
+              <Camera size={14} /> {t('settings.changePhoto')}<input type="file" accept="image/*" className="hidden" onChange={e => upload(e, 'avatarUrl')} />
             </label>
-            <p className="mt-2 text-[11px] text-slate-400">JPG, PNG up to 5 MB</p>
+            <p className="mt-2 text-[11px] text-slate-400">{t('settings.photoHint')}</p>
           </div>
         </div>
       </Card>
 
       <Card>
-        <SectionTitle icon={Moon} title="Appearance" color="violet" />
+        <SectionTitle icon={Moon} title={t('settings.appearance')} color="violet" />
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Theme</label>
+            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('settings.theme')}</label>
             <div className="flex gap-3">
               {[{ v: 'light', Icon: Sun }, { v: 'dark', Icon: Moon }].map(({ v, Icon }) => (
-                <button key={v} onClick={() => set('theme', v)}
+                <button key={v} onClick={() => { set('theme', v); setGlobalTheme(v); }}
                   className={`flex flex-1 items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-semibold transition ${(form.theme || 'light') === v ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm shadow-indigo-500/10' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}>
-                  <Icon size={16} />{v.charAt(0).toUpperCase() + v.slice(1)}
+                  <Icon size={16} />{t(`settings.${v}`)}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Language</label>
-            <select value={form.language || 'English'} onChange={e => set('language', e.target.value)}
+            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('settings.language')}</label>
+            <select value={form.language || 'English'} onChange={e => { set('language', e.target.value); setGlobalLanguage(e.target.value); }}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10">
               <option>English</option><option>Hindi</option><option>Telugu</option>
             </select>
@@ -611,11 +623,11 @@ export default function StudentProfile({ email, onBack }) {
       </Card>
 
       <Card>
-        <SectionTitle icon={Bell} title="Notifications" color="amber" />
+        <SectionTitle icon={Bell} title={t('settings.notifications')} color="amber" />
         <div className="space-y-3">
-          {[{ v: 'all', l: 'All Notifications', ds: 'Stay updated on everything' },
-            { v: 'important', l: 'Important Only', ds: 'Grades, deadlines and alerts' },
-            { v: 'none', l: 'None', ds: 'No notifications' }].map(opt => (
+          {[{ v: 'all', l: t('settings.allNotifications'), ds: t('settings.allNotificationsDesc') },
+            { v: 'important', l: t('settings.importantOnly'), ds: t('settings.importantOnlyDesc') },
+            { v: 'none', l: t('settings.noneNotifications'), ds: t('settings.noneNotificationsDesc') }].map(opt => (
             <button key={opt.v} onClick={() => set('notificationPrefs', opt.v)}
               className={`flex w-full items-center gap-4 rounded-xl border-2 p-4 text-left transition ${(form.notificationPrefs || 'all') === opt.v ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-200 hover:border-slate-300'}`}>
               <div className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition ${(form.notificationPrefs || 'all') === opt.v ? 'border-indigo-500 bg-indigo-500' : 'border-slate-300'}`}>
@@ -628,11 +640,11 @@ export default function StudentProfile({ email, onBack }) {
       </Card>
 
       <Card>
-        <SectionTitle icon={Lock} title="Privacy" color="red" />
+        <SectionTitle icon={Lock} title={t('settings.privacy')} color="red" />
         <div className="space-y-3">
-          {[{ v: 'public', l: 'Public', ds: 'Everyone can view your profile', ic: Globe },
-            { v: 'university', l: 'University Only', ds: 'Visible to KLH members', ic: GraduationCap },
-            { v: 'private', l: 'Private', ds: 'Only you can see your profile', ic: Lock }].map(opt => (
+          {[{ v: 'public', l: t('settings.public'), ds: t('settings.publicDesc'), ic: Globe },
+            { v: 'university', l: t('settings.universityOnly'), ds: t('settings.universityOnlyDesc'), ic: GraduationCap },
+            { v: 'private', l: t('settings.private'), ds: t('settings.privateDesc'), ic: Lock }].map(opt => (
             <button key={opt.v} onClick={() => set('privacySettings', opt.v)}
               className={`flex w-full items-center gap-4 rounded-xl border-2 p-4 text-left transition ${(form.privacySettings || 'public') === opt.v ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-200 hover:border-slate-300'}`}>
               <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${(form.privacySettings || 'public') === opt.v ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}><opt.ic size={16} /></div>
@@ -644,7 +656,7 @@ export default function StudentProfile({ email, onBack }) {
 
       <button onClick={save} disabled={saving}
         className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:from-indigo-700 hover:to-violet-700 disabled:opacity-50">
-        {saving ? 'Saving…' : 'Save Settings'}
+        {saving ? t('common.saving') : t('settings.saveSettings')}
       </button>
     </div>
   );

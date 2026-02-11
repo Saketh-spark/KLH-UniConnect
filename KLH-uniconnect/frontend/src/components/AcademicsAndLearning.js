@@ -543,7 +543,7 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
     const matchesFileType = selectedFileType === 'All' || material.type === selectedFileType;
     const matchesSemester = selectedSemester === 'All' || material.semester === selectedSemester;
     return matchesSearch && matchesFileType && matchesSemester;
-  });
+  }).sort((a, b) => new Date(b.uploadDate || b.date || 0) - new Date(a.uploadDate || a.date || 0));
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -783,7 +783,13 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
                 }`}
                 style={{ transitionDelay: '250ms' }}
               >
-                {displayAssignments.map((assignment, index) => (
+                {[...displayAssignments].sort((a, b) => {
+                  // Recently uploaded first, most overdue last
+                  if (a.isOverdue && !b.isOverdue) return 1;
+                  if (!a.isOverdue && b.isOverdue) return -1;
+                  if (a.isOverdue && b.isOverdue) return (b.daysOverdue || 0) - (a.daysOverdue || 0);
+                  return new Date(b.dueDate || b.date || 0) - new Date(a.dueDate || a.date || 0);
+                }).map((assignment, index) => (
               <div
                 key={assignment.id}
                 className={`rounded-[16px] border-l-4 ${
@@ -1090,34 +1096,60 @@ const SUBJECTS = [
 
 const TIMETABLE = {
   Monday:    [
-    { subject: 'FSAD',   type: 'Lab',       time: '10:10 AM – 11:50 AM' },
-    { subject: 'FAIEDC', type: 'Lab',       time: '11:50 AM – 12:45 PM' },
-    { subject: 'CIS',    type: 'Lab',       time: '1:30 PM – 2:20 PM' },
-    { subject: 'ML',     type: 'Practical', time: '2:20 PM – 4:00 PM' },
+    { subject: 'MO',     type: 'Theory',           time: '8:15 AM – 9:05 AM' },
+    { subject: 'MO',     type: 'Theory',           time: '9:05 AM – 9:55 AM' },
+    { subject: 'FSAD',   type: 'Theory',           time: '10:10 AM – 11:00 AM' },
+    { subject: 'FSAD',   type: 'Theory',           time: '11:00 AM – 11:50 AM' },
+    { subject: 'FAIEDC', type: 'Theory',           time: '11:50 AM – 12:45 PM' },
+    { subject: 'CIS',    type: 'Theory',           time: '1:30 PM – 2:20 PM' },
+    { subject: 'ML',     type: 'Lab',              time: '2:20 PM – 3:10 PM' },
+    { subject: 'ML',     type: 'Lab',              time: '3:10 PM – 4:00 PM' },
   ],
   Tuesday:   [
-    { subject: 'FSAD',   type: 'Theory',   time: '10:10 AM – 11:00 AM' },
-    { subject: 'FAIEDC', type: 'Lab',       time: '11:00 AM – 12:45 PM' },
-    { subject: 'CIS',    type: 'Lab',       time: '1:30 PM – 3:10 PM' },
+    { subject: 'DAA',    type: 'Theory',           time: '8:15 AM – 9:05 AM' },
+    { subject: 'DAA',    type: 'Theory',           time: '9:05 AM – 9:55 AM' },
+    { subject: 'FSAD',   type: 'Theory',           time: '10:10 AM – 11:00 AM' },
+    { subject: 'FSAD',   type: 'Theory',           time: '11:00 AM – 11:50 AM' },
+    { subject: 'FAIEDC', type: 'Theory',           time: '11:50 AM – 12:45 PM' },
+    { subject: 'CIS',    type: 'Theory',           time: '1:30 PM – 2:20 PM' },
+    { subject: 'CIS',    type: 'Theory',           time: '2:20 PM – 3:10 PM' },
+    { subject: 'Sports', type: 'Sports',           time: '3:10 PM – 4:00 PM' },
   ],
   Wednesday: [
-    { subject: 'CN',     type: 'Lab',       time: '10:10 AM – 11:00 AM' },
-    { subject: 'FAIEDC', type: 'Practical', time: '11:00 AM – 12:45 PM' },
-    { subject: 'ML',     type: 'Lab',       time: '1:30 PM – 2:20 PM' },
+    { subject: 'DAA',    type: 'Lab',              time: '8:15 AM – 9:05 AM' },
+    { subject: 'DAA',    type: 'Lab',              time: '9:05 AM – 9:55 AM' },
+    { subject: 'CN',     type: 'Theory',           time: '10:10 AM – 11:00 AM' },
+    { subject: 'FAIEDC', type: 'Lab',              time: '11:00 AM – 11:50 AM' },
+    { subject: 'FAIEDC', type: 'Lab',              time: '11:50 AM – 12:45 PM' },
+    { subject: 'ML',     type: 'Theory',           time: '1:30 PM – 2:20 PM' },
+    { subject: 'Coding', type: 'Coding Practice',  time: '2:20 PM – 3:10 PM' },
+    { subject: 'Coding', type: 'Coding Practice',  time: '3:10 PM – 4:00 PM' },
   ],
   Thursday:  [
-    { subject: 'CN',     type: 'Lab',       time: '1:30 PM – 2:20 PM' },
+    { subject: 'CRT',    type: 'CRT',              time: '10:10 AM – 11:00 AM' },
+    { subject: 'CRT',    type: 'CRT',              time: '11:00 AM – 11:50 AM' },
+    { subject: 'DAA',    type: 'Theory',           time: '11:50 AM – 12:45 PM' },
+    { subject: 'CN',     type: 'Theory',           time: '1:30 PM – 2:20 PM' },
+    { subject: 'DA',     type: 'DA/Mentor-Mentee', time: '2:20 PM – 4:00 PM' },
   ],
   Friday:    [
-    { subject: 'CIS',    type: 'Theory',   time: '10:10 AM – 11:00 AM' },
-    { subject: 'DAA',    type: 'Theory',   time: '11:00 AM – 11:50 AM' },
-    { subject: 'DAA',    type: 'Practical', time: '11:50 AM – 12:45 PM' },
-    { subject: 'CN',     type: 'Lab',       time: '1:30 PM – 2:20 PM' },
+    { subject: 'MO',     type: 'Tutorial',         time: '8:15 AM – 9:05 AM' },
+    { subject: 'MO',     type: 'Tutorial',         time: '9:05 AM – 9:55 AM' },
+    { subject: 'CIS',    type: 'Theory',           time: '10:10 AM – 11:00 AM' },
+    { subject: 'DAA',    type: 'Theory',           time: '11:00 AM – 11:50 AM' },
+    { subject: 'DAA',    type: 'Theory',           time: '11:50 AM – 12:45 PM' },
+    { subject: 'CN',     type: 'Theory',           time: '1:30 PM – 2:20 PM' },
+    { subject: 'CN',     type: 'Theory',           time: '2:20 PM – 3:10 PM' },
   ],
   Saturday:  [
-    { subject: 'ML',     type: 'Lab',       time: '8:15 AM – 9:55 AM' },
-    { subject: 'CIS',    type: 'Practical', time: '10:10 AM – 11:00 AM' },
-    { subject: 'CN',     type: 'Practical', time: '1:30 PM – 3:10 PM' },
+    { subject: 'ML',     type: 'Theory',           time: '8:15 AM – 9:05 AM' },
+    { subject: 'ML',     type: 'Theory',           time: '9:05 AM – 9:55 AM' },
+    { subject: 'CIS',    type: 'Lab',              time: '10:10 AM – 11:00 AM' },
+    { subject: 'CIS',    type: 'Lab',              time: '11:00 AM – 11:50 AM' },
+    { subject: 'DAA',    type: 'Theory',           time: '11:50 AM – 12:45 PM' },
+    { subject: 'CN',     type: 'Lab',              time: '1:30 PM – 2:20 PM' },
+    { subject: 'CN',     type: 'Lab',              time: '2:20 PM – 3:10 PM' },
+    { subject: 'Sports', type: 'Sports',           time: '3:10 PM – 4:00 PM' },
   ],
 };
 
@@ -1128,6 +1160,11 @@ const typeBadge = (type) => {
     Theory:   'bg-blue-100 text-blue-700',
     Lab:      'bg-purple-100 text-purple-700',
     Practical:'bg-amber-100 text-amber-700',
+    Tutorial: 'bg-cyan-100 text-cyan-700',
+    Sports:   'bg-green-100 text-green-700',
+    CRT:      'bg-orange-100 text-orange-700',
+    'Coding Practice': 'bg-teal-100 text-teal-700',
+    'DA/Mentor-Mentee': 'bg-pink-100 text-pink-700',
   };
   return <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${m[type] || 'bg-slate-100 text-slate-600'}`}>{type}</span>;
 };
@@ -1135,6 +1172,11 @@ const typeBadge = (type) => {
 const typeIcon = (type) => {
   if (type === 'Lab') return <FlaskConical size={14} className="text-purple-500" />;
   if (type === 'Practical') return <BookMarked size={14} className="text-amber-500" />;
+  if (type === 'Tutorial') return <BookOpen size={14} className="text-cyan-500" />;
+  if (type === 'Sports') return <Users size={14} className="text-green-500" />;
+  if (type === 'CRT') return <Clock size={14} className="text-orange-500" />;
+  if (type === 'Coding Practice') return <BookMarked size={14} className="text-teal-500" />;
+  if (type === 'DA/Mentor-Mentee') return <Users size={14} className="text-pink-500" />;
   return <BookOpen size={14} className="text-blue-500" />;
 };
 
