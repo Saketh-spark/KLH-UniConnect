@@ -58,7 +58,7 @@ const AuthenticationScreen = ({ onBack = () => {}, onAuthenticated = () => {} })
       return;
     }
 
-    const endpoint = `${API_BASE}/api/auth/student/${isSignIn ? 'sign-in' : 'sign-up'}`;
+    const endpoint = `${API_BASE}/auth/student/${isSignIn ? 'sign-in' : 'sign-up'}`;
 
     try {
       setStatus('Sending credentials...');
