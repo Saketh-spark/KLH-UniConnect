@@ -1,0 +1,41 @@
+package com.uniconnect.dto;
+
+import java.time.Instant;
+import java.util.List;
+
+public record ReelFeedResponse(
+    String id,
+    String studentId,
+    String studentName,
+    String department,
+    String year,
+    String avatar,
+    String title,
+    String description,
+    String videoUrl,
+    String thumbnailUrl,
+    String category,
+    String subject,
+    String skill,
+    String semester,
+    String clubOrEvent,
+    Instant createdAt,
+    int views,
+    int likes,
+    int comments,
+    int saves,
+    int facultyLikes,
+    boolean verified,
+    boolean safe,
+    double academicScore,
+    String academicStatus,
+    String placementVisibility,
+    boolean placementReady,
+    String featuredTag,
+    List<String> hashtags,
+    List<ReelCommentResponse> commentList,
+    List<FacultyFeedbackResponse> facultyFeedbacks,
+    boolean isLikedByCurrentUser,
+    boolean isSavedByCurrentUser,
+    boolean isLikedByFaculty
+) {}

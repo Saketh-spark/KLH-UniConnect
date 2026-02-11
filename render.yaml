@@ -4,8 +4,8 @@ services:
     name: klh-uniconnect-backend
     runtime: docker
     plan: free
-    dockerContext: ./KLH-uniconnect/backend
-    dockerfilePath: ./KLH-uniconnect/backend/Dockerfile
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
