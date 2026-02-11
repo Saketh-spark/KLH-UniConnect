@@ -58,7 +58,11 @@ const AuthenticationScreen = ({ onBack = () => {}, onAuthenticated = () => {} })
       return;
     }
 
-    const endpoint = `${API_BASE}/auth/student/${isSignIn ? 'sign-in' : 'sign-up'}`;
+    const endpoint = `${API_BASE_URL}/auth/student/${isSignIn ? 'sign-in' : 'sign-up'}`;
+    
+    // Debug: Log the API URL being used
+    console.log('🔍 API_BASE_URL:', API_BASE_URL);
+    console.log('🔍 Full endpoint:', endpoint);
 
     try {
       setStatus('Sending credentials...');
