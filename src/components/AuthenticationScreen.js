@@ -59,38 +59,62 @@ const AuthenticationScreen = ({ onBack = () => {}, onAuthenticated = () => {} })
       return;
     }
 
-    const endpoint = `${API_BASE_URL}/auth/student/${isSignIn ? 'sign-in' : 'sign-up'}`;
-    
-    // Debug: Log the API URL being used
+    // Try multiple endpoint approaches
+    const endpoints = [
+      `${API_BASE_URL}/auth/student/${isSignIn ? 'sign-in' : 'sign-up'}`,
+      `${API_BASE_URL}/api/auth/student/${isSignIn ? 'sign-in' : 'sign-up'}`,
+      `https://klh-uniconnect.onrender.com/api/auth/student/${isSignIn ? 'sign-in' : 'sign-up'}`,
+    ];
+
+    console.log('🔍 Trying endpoints:', endpoints);
+
+    // Debug: Log API URL being used
     console.log('🔍 API_BASE_URL:', API_BASE_URL);
-    console.log('🔍 Full endpoint:', endpoint);
+    console.log('🔍 Full endpoint:', endpoints[0]);
 
-    try {
-      setStatus('Sending credentials...');
-      const payload = {
-        email: formValues.email,
-        password: formValues.password
-      };
+    for (const endpoint of endpoints) {
+      try {
+        setStatus('Sending credentials...');
+        const payload = {
+          email: formValues.email,
+          password: formValues.password,
+        };
 
-      if (!isSignIn) {
-        payload.confirmPassword = formValues.confirmPassword;
-      }
+        if (!isSignIn) {
+          payload.confirmPassword = formValues.confirmPassword;
+        }
 
-      const response = await axios.post(endpoint, payload);
-      
-      setStatus(response.data.message);
-      setErrors({});
-      localStorage.setItem('klhEmail', formValues.email);
-      localStorage.setItem('klhStudentId', response.data.studentId);
-      onAuthenticated(formValues.email, response.data.studentId);
-    } catch (error) {
-      setStatus('');
-      if (error.response) {
-        setErrors((prev) => ({ ...prev, api: error.response.data.message || 'Authentication failed' }));
-      } else {
-        setErrors((prev) => ({ ...prev, api: 'Unable to reach authentication service' }));
+        console.log(`🚀 Trying endpoint: ${endpoint}`);
+
+        const response = await axios.post(endpoint, payload, {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          timeout: 10000,
+        });
+
+        console.log('✅ Success with endpoint:', endpoint);
+        console.log('Response:', response.data);
+
+        setStatus(response.data.message);
+        setErrors({});
+        localStorage.setItem('klhEmail', formValues.email);
+        localStorage.setItem('klhStudentId', response.data.studentId);
+        onAuthenticated(formValues.email, response.data.studentId);
+        return; // Success, exit loop
+      } catch (error) {
+        console.log(`❌ Failed with ${endpoint}:`, error.message);
+        if (error.response) {
+          console.log('Error response:', error.response.status, error.response.data);
+        }
+        continue; // Try next endpoint
       }
     }
+
+    // All endpoints failed
+    setStatus('');
+    setErrors((prev) => ({ ...prev, api: 'Unable to reach authentication service - all endpoints failed' }));
   };
 
   const errorClass = 'text-xs font-medium text-red-500';
