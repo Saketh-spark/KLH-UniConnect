@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8085';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8085';
 
 const AuthenticationScreen = ({ onBack = () => {}, onAuthenticated = () => {} }) => {
   const [mounted, setMounted] = useState(false);

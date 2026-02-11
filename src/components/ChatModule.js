@@ -7,7 +7,7 @@ import {
   PhoneOff, VideoOff, Mic, MicOff, PhoneCall
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8085';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8085';
 const WS_URL = 'ws://localhost:8085/ws/chat';
 
 // ─── Emoji picker data ───
