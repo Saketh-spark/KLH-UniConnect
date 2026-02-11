@@ -10,7 +10,7 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
       - key: MONGODB_URI
-        value: ${MONGODB_URI}
+        value: mongodb+srv://sakethreddy11111_db_user:qlLJ2gQo2akSci7T@uniconnect.y84peev.mongodb.net/uniconnect
       - key: PORT
         value: 8080
       - key: SPRING_DATA_MONGODB_CONNECT-TIMEOUT
@@ -33,9 +33,3 @@ services:
         value: wss://klh-uniconnect-backend.onrender.com/ws
       - key: VITE_APP_NAME
         value: KLH-Uniconnect
-
-# MongoDB Database
-databases:
-  - name: klh-uniconnect-db
-    databaseName: klh-uniconnect
-    user: klh-user
