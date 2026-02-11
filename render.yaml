@@ -13,6 +13,10 @@ services:
         value: ${MONGODB_URI}
       - key: PORT
         value: 8080
+      - key: SPRING_DATA_MONGODB_CONNECT-TIMEOUT
+        value: "5000"
+      - key: SPRING_DATA_MONGODB_SOCKET-TIMEOUT
+        value: "10000"
     healthCheckPath: /actuator/health
 
   # Frontend Service
@@ -27,6 +31,8 @@ services:
         value: https://klh-uniconnect-backend.onrender.com/api
       - key: VITE_WS_URL
         value: wss://klh-uniconnect-backend.onrender.com/ws
+      - key: VITE_APP_NAME
+        value: KLH-Uniconnect
 
 # MongoDB Database
 databases:
