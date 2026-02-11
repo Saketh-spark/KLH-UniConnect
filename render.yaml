@@ -10,7 +10,7 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
       - key: MONGODB_URI
-        value: mongodb+srv://sakethreddy11111_db_user:qlLJ2gQo2akSci7T@uniconnect.y84peev.mongodb.net/uniconnect
+        value: mongodb+srv://sakethreddy11111_db_user:qlLJ2gQo2akSci7T@uniconnect.y84peev.mongodb.net/uniconnect?retryWrites=true&w=majority&ssl=true
       - key: PORT
         value: 8080
       - key: SPRING_DATA_MONGODB_CONNECT-TIMEOUT
