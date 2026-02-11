@@ -1,7 +1,6 @@
 {
-  "buildCommand": "cd KLH-uniconnect/frontend && npm install && npm run build",
-  "outputDirectory": "KLH-uniconnect/frontend/dist",
-  "installCommand": "cd KLH-uniconnect/frontend && npm install",
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": "dist",
   "framework": "vite",
   "env": {
     "VITE_API_BASE_URL": "https://klh-uniconnect.onrender.com/api",
