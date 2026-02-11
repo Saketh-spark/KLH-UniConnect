@@ -3,8 +3,15 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "env": {
-    "VITE_API_BASE_URL": "https://klh-uniconnect.onrender.com/api",
+    "VITE_API_BASE_URL": "https://klh-uniconnect.onrender.com",
     "VITE_WS_URL": "wss://klh-uniconnect.onrender.com/ws",
     "VITE_APP_NAME": "KLH-Uniconnect"
+  },
+  "build": {
+    "env": {
+      "VITE_API_BASE_URL": "https://klh-uniconnect.onrender.com",
+      "VITE_WS_URL": "wss://klh-uniconnect.onrender.com/ws",
+      "VITE_APP_NAME": "KLH-Uniconnect"
+    }
   }
 }
