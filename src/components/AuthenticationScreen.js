@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8085';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://klh-uniconnect.onrender.com/api';
 
 const AuthenticationScreen = ({ onBack = () => {}, onAuthenticated = () => {} }) => {
   const [mounted, setMounted] = useState(false);
@@ -75,28 +76,20 @@ const AuthenticationScreen = ({ onBack = () => {}, onAuthenticated = () => {} })
         payload.confirmPassword = formValues.confirmPassword;
       }
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const body = await response.json();
-
-      if (!response.ok) {
-        setErrors((prev) => ({ ...prev, api: body.message ?? 'Authentication failed' }));
-        setStatus('');
-        return;
-      }
-
-      setStatus(body.message);
+      const response = await axios.post(endpoint, payload);
+      
+      setStatus(response.data.message);
       setErrors({});
       localStorage.setItem('klhEmail', formValues.email);
-      localStorage.setItem('klhStudentId', body.studentId);
-      onAuthenticated(formValues.email, body.studentId);
+      localStorage.setItem('klhStudentId', response.data.studentId);
+      onAuthenticated(formValues.email, response.data.studentId);
     } catch (error) {
       setStatus('');
-      setErrors((prev) => ({ ...prev, api: 'Unable to reach the authentication service' }));
+      if (error.response) {
+        setErrors((prev) => ({ ...prev, api: error.response.data.message || 'Authentication failed' }));
+      } else {
+        setErrors((prev) => ({ ...prev, api: 'Unable to reach authentication service' }));
+      }
     }
   };
 
