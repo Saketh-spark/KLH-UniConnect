@@ -23,7 +23,8 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8085/api/safety';
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8085';
+const API_BASE_URL = `${API_BASE}/api/safety`;
 
 const StudentSafety = ({ onBack = () => {}, studentId = '' }) => {
   const [mounted, setMounted] = useState(false);

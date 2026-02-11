@@ -12,7 +12,8 @@ import {
   AlertTriangle, ArrowUp, ArrowDown, Eye, Star, Loader
 } from 'lucide-react';
 
-const API_BASE_URL = 'http://localhost:8085/api/analytics';
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8085';
+const API_BASE_URL = `${API_BASE}/api/analytics`;
 
 export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack }) {
   const [activeTab, setActiveTab] = useState('overview');

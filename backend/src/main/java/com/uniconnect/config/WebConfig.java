@@ -12,17 +12,19 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
+        registry.addMapping("/**")
                 .allowedOrigins(
-                    "https://klh-uniconnect.onrender.com",
-                    "https://*.vercel.app",
+                    "http://localhost:3000",
                     "http://localhost:4173",
                     "http://localhost:5173",
-                    "http://localhost:3000"
+                    "http://localhost:4174",
+                    "https://klh-uni-connect.vercel.app",
+                    "https://klh-uniconnect.onrender.com"
                 )
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true);
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 
     @Override
