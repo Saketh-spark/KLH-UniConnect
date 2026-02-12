@@ -23,6 +23,7 @@ public class CloudinaryConfig {
         // Check if Cloudinary URL is set (preferred method)
         String cloudinaryUrl = System.getenv("CLOUDINARY_URL");
         if (cloudinaryUrl != null && !cloudinaryUrl.isEmpty()) {
+            System.out.println("☁️ Cloudinary configured via CLOUDINARY_URL environment variable");
             return new Cloudinary(cloudinaryUrl);
         }
         
@@ -30,6 +31,7 @@ public class CloudinaryConfig {
         if (cloudName != null && !cloudName.isEmpty() &&
             apiKey != null && !apiKey.isEmpty() &&
             apiSecret != null && !apiSecret.isEmpty()) {
+            System.out.println("☁️ Cloudinary configured via individual properties");
             return new Cloudinary(ObjectUtils.asMap(
                 "cloud_name", cloudName,
                 "api_key", apiKey,
@@ -38,7 +40,10 @@ public class CloudinaryConfig {
             ));
         }
         
-        // Return null if not configured - will fall back to local storage
-        return null;
+        // Cloudinary is required - throw error if not configured
+        throw new IllegalStateException(
+            "Cloudinary configuration is required! Please set CLOUDINARY_URL environment variable " +
+            "or configure cloudinary.cloud-name, cloudinary.api-key, and cloudinary.api-secret properties."
+        );
     }
 }

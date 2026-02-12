@@ -6,18 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class FileUploadService {
-    private static final String UPLOAD_DIR = "uploads/reels";
     private static final long MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
     private static final String[] ALLOWED_VIDEO_TYPES = {"video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo"};
     private static final String[] ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"};
@@ -25,20 +20,13 @@ public class FileUploadService {
     private final Cloudinary cloudinary;
 
     @Autowired
-    public FileUploadService(@Autowired(required = false) Cloudinary cloudinary) {
+    public FileUploadService(Cloudinary cloudinary) {
         this.cloudinary = cloudinary;
         
-        // Create local upload directory as fallback
-        File dir = new File(UPLOAD_DIR);
-        if (!dir.exists()) {
-            dir.mkdirs();
+        if (cloudinary == null) {
+            throw new IllegalStateException("Cloudinary must be configured for file uploads. Please set CLOUDINARY_URL environment variable.");
         }
-        
-        if (cloudinary != null) {
-            System.out.println("☁️ Cloudinary configured - uploads will be stored in cloud");
-        } else {
-            System.out.println("📁 Cloudinary not configured - uploads will be stored locally");
-        }
+        System.out.println("☁️ FileUploadService: Cloudinary configured - uploads will be stored in cloud");
     }
 
     public String uploadVideo(MultipartFile file) throws IOException {
@@ -72,19 +60,14 @@ public class FileUploadService {
             throw new IllegalArgumentException("File type not allowed: " + contentType);
         }
 
-        // Upload to Cloudinary if configured
-        if (cloudinary != null) {
-            return uploadToCloudinary(file, resourceType);
-        }
-
-        // Fallback to local storage
-        return uploadToLocal(file);
+        // Upload to Cloudinary
+        return uploadToCloudinary(file, resourceType);
     }
 
     private String uploadToCloudinary(MultipartFile file, String resourceType) throws IOException {
         try {
             String originalFilename = file.getOriginalFilename();
-            String baseName = originalFilename != null ? 
+            String baseName = originalFilename != null && originalFilename.contains(".") ? 
                 originalFilename.substring(0, originalFilename.lastIndexOf(".")) : "upload";
             String publicId = "uniconnect/" + resourceType + "s/" + UUID.randomUUID() + "_" + baseName;
             
@@ -99,20 +82,10 @@ public class FileUploadService {
             System.out.println("☁️ Uploaded to Cloudinary: " + secureUrl);
             return secureUrl;
         } catch (Exception e) {
-            System.out.println("⚠️ Cloudinary upload failed, falling back to local: " + e.getMessage());
-            return uploadToLocal(file);
+            System.out.println("❌ Cloudinary upload failed: " + e.getMessage());
+            e.printStackTrace();
+            throw new IOException("Failed to upload file to Cloudinary: " + e.getMessage(), e);
         }
-    }
-
-    private String uploadToLocal(MultipartFile file) throws IOException {
-        String originalFilename = file.getOriginalFilename();
-        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
-
-        Path uploadPath = Paths.get(UPLOAD_DIR, uniqueFilename);
-        Files.write(uploadPath, file.getBytes());
-
-        return "/uploads/reels/" + uniqueFilename;
     }
 
     public String fileToBase64(MultipartFile file) throws IOException {

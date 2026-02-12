@@ -77,13 +77,16 @@ export default function ProfileModal({
   };
 
   /* ─── Helpers ─── */
-  const renderAvatar = (url, name, size = 'h-28 w-28') => (
-    url
-      ? <img src={`${API}${url}`} alt={name} className={`${size} rounded-full object-cover ring-4 ring-white shadow-xl`} />
+  const renderAvatar = (url, name, size = 'h-28 w-28') => {
+    const imgSrc = url
+      ? (url.startsWith('http://') || url.startsWith('https://') ? url : `${API}${url}`)
+      : null;
+    return imgSrc
+      ? <img src={imgSrc} alt={name} className={`${size} rounded-full object-cover ring-4 ring-white shadow-xl`} />
       : <div className={`${size} flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-4xl font-bold text-white ring-4 ring-white shadow-xl`}>
           {(name || '?').charAt(0).toUpperCase()}
-        </div>
-  );
+        </div>;
+  };
 
   const renderFollowButton = () => {
     if (followStatus === 'ACCEPTED') {
@@ -152,7 +155,11 @@ export default function ProfileModal({
           <>
             {/* ─── Cover + Avatar ─── */}
             <div className="relative">
-              <div className="h-40 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+              {profile.coverUrl ? (
+                <img src={profile.coverUrl.startsWith('http') ? profile.coverUrl : `${API}${profile.coverUrl}`} alt="Cover" className="h-40 w-full object-cover" />
+              ) : (
+                <div className="h-40 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+              )}
               <div className="absolute -bottom-14 left-1/2 -translate-x-1/2">
                 {renderAvatar(profile.avatarUrl, profile.name)}
               </div>

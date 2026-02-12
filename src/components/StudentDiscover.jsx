@@ -367,7 +367,7 @@ export default function StudentDiscover({ email, onBack, onChat }) {
                     <div className="flex flex-col items-center px-6 pt-7 pb-2 text-center">
                       {/* Avatar */}
                       {p.avatarUrl
-                        ? <img src={`${API}${p.avatarUrl}`} alt={p.name} className="h-20 w-20 rounded-full object-cover ring-4 ring-indigo-50 shadow-md" />
+                        ? <img src={p.avatarUrl.startsWith('http') ? p.avatarUrl : `${API}${p.avatarUrl}`} alt={p.name} className="h-20 w-20 rounded-full object-cover ring-4 ring-indigo-50 shadow-md" />
                         : <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-2xl font-bold text-white ring-4 ring-indigo-50 shadow-md">
                             {(p.name || '?').charAt(0).toUpperCase()}
                           </div>
@@ -922,7 +922,7 @@ export default function StudentDiscover({ email, onBack, onChat }) {
               {followRequests.slice(0, 5).map(req => (
                 <div key={req.id} className="flex items-center gap-4 rounded-xl bg-white p-3 shadow-sm">
                   {req.fromAvatarUrl
-                    ? <img src={`${API}${req.fromAvatarUrl}`} alt="" className="h-10 w-10 rounded-full object-cover" />
+                    ? <img src={req.fromAvatarUrl.startsWith('http') ? req.fromAvatarUrl : `${API}${req.fromAvatarUrl}`} alt="" className="h-10 w-10 rounded-full object-cover" />
                     : <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-sm font-bold text-white">{(req.fromName || '?').charAt(0).toUpperCase()}</div>
                   }
                   <div className="flex-1 min-w-0">

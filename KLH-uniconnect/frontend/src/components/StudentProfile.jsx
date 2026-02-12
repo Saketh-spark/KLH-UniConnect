@@ -586,7 +586,7 @@ export default function StudentProfile({ email, onBack, defaultTab }) {
         <div className="flex items-center gap-6">
           <div className="relative">
             <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-2xl font-bold text-white shadow-md shadow-indigo-500/20">
-              {d.avatarUrl ? <img src={`${API}${d.avatarUrl}`} alt="" className="h-full w-full object-cover" /> : (d.name || '?').charAt(0).toUpperCase()}
+              {d.avatarUrl ? <img src={d.avatarUrl.startsWith('http') ? d.avatarUrl : `${API}${d.avatarUrl}`} alt="" className="h-full w-full object-cover" /> : (d.name || '?').charAt(0).toUpperCase()}
             </div>
           </div>
           <div>
@@ -699,7 +699,7 @@ export default function StudentProfile({ email, onBack, defaultTab }) {
       <div className="relative">
         <div className="relative h-44 overflow-hidden sm:h-52" style={{ background: 'linear-gradient(to right, #4f46e5, #7c3aed, #7e22ce)' }}>
           {d.coverUrl ? (
-            <img src={`${API}${d.coverUrl}`} alt="Cover" className="absolute inset-0 h-full w-full object-cover" />
+            <img src={d.coverUrl.startsWith('http') ? d.coverUrl : `${API}${d.coverUrl}`} alt="Cover" className="absolute inset-0 h-full w-full object-cover" />
           ) : (
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjA1Ij48cGF0aCBkPSJNMzYgMzRoLTJWMGgydjM0em0tNCAwSDI4VjBoNHYzNHptLTggMEgyMFYwaDR2MzR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-60" />
           )}
@@ -714,7 +714,7 @@ export default function StudentProfile({ email, onBack, defaultTab }) {
           <div className="-mt-16 flex flex-col items-start gap-5 sm:flex-row sm:items-end">
             <div className="relative">
               <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-gradient-to-br from-indigo-500 to-violet-600 text-4xl font-bold text-white shadow-xl shadow-indigo-500/20">
-                {d.avatarUrl ? <img src={`${API}${d.avatarUrl}`} alt="" className="h-full w-full object-cover" /> : (d.name || email || '?').charAt(0).toUpperCase()}
+                {d.avatarUrl ? <img src={d.avatarUrl.startsWith('http') ? d.avatarUrl : `${API}${d.avatarUrl}`} alt="" className="h-full w-full object-cover" /> : (d.name || email || '?').charAt(0).toUpperCase()}
               </div>
               {edit && (
                 <label className="absolute -bottom-1 -right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg transition hover:bg-indigo-700">

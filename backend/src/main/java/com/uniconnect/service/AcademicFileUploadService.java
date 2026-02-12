@@ -1,18 +1,17 @@
 package com.uniconnect.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.File;
+
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class AcademicFileUploadService {
-    private static final String MATERIALS_DIR = "uploads/materials";
-    private static final String ASSIGNMENTS_DIR = "uploads/assignments";
     private static final long MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
     private static final String[] ALLOWED_DOC_TYPES = {
         "application/pdf",
@@ -23,21 +22,27 @@ public class AcademicFileUploadService {
         "text/plain"
     };
 
-    public AcademicFileUploadService() {
-        // Create upload directories if they don't exist
-        new File(MATERIALS_DIR).mkdirs();
-        new File(ASSIGNMENTS_DIR).mkdirs();
+    private final Cloudinary cloudinary;
+
+    @Autowired
+    public AcademicFileUploadService(Cloudinary cloudinary) {
+        this.cloudinary = cloudinary;
+        
+        if (cloudinary == null) {
+            throw new IllegalStateException("Cloudinary must be configured for file uploads. Please set CLOUDINARY_URL environment variable.");
+        }
+        System.out.println("☁️ AcademicFileUploadService: Cloudinary configured - documents will be stored in cloud");
     }
 
     public String uploadMaterial(MultipartFile file) throws IOException {
-        return uploadFile(file, MATERIALS_DIR, "material");
+        return uploadFile(file, "materials");
     }
 
     public String uploadAssignment(MultipartFile file) throws IOException {
-        return uploadFile(file, ASSIGNMENTS_DIR, "assignment");
+        return uploadFile(file, "assignments");
     }
 
-    private String uploadFile(MultipartFile file, String directory, String fileType) throws IOException {
+    private String uploadFile(MultipartFile file, String folderName) throws IOException {
         // Validate file
         if (file.isEmpty()) {
             throw new IllegalArgumentException("File is empty");
@@ -60,17 +65,32 @@ public class AcademicFileUploadService {
             throw new IllegalArgumentException("File type not allowed: " + contentType);
         }
 
-        // Generate unique filename
-        String originalFilename = file.getOriginalFilename();
-        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
+        // Upload to Cloudinary
+        return uploadToCloudinary(file, folderName);
+    }
 
-        // Save file
-        Path uploadPath = Paths.get(directory, uniqueFilename);
-        Files.write(uploadPath, file.getBytes());
-
-        // Return file URL (relative path that can be served)
-        return "/" + directory + "/" + uniqueFilename;
+    private String uploadToCloudinary(MultipartFile file, String folderName) throws IOException {
+        try {
+            String originalFilename = file.getOriginalFilename();
+            String baseName = originalFilename != null && originalFilename.contains(".") ? 
+                originalFilename.substring(0, originalFilename.lastIndexOf(".")) : "document";
+            String publicId = "uniconnect/" + folderName + "/" + UUID.randomUUID() + "_" + baseName;
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                "resource_type", "raw",  // Use "raw" for non-image/video files like PDFs
+                "public_id", publicId,
+                "folder", "uniconnect"
+            ));
+            
+            String secureUrl = (String) uploadResult.get("secure_url");
+            System.out.println("☁️ Document uploaded to Cloudinary: " + secureUrl);
+            return secureUrl;
+        } catch (Exception e) {
+            System.out.println("❌ Cloudinary upload failed: " + e.getMessage());
+            e.printStackTrace();
+            throw new IOException("Failed to upload file to Cloudinary: " + e.getMessage(), e);
+        }
     }
 
     public String formatFileSize(long bytes) {

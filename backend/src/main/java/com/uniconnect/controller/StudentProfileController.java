@@ -1,21 +1,19 @@
 package com.uniconnect.controller;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.uniconnect.dto.StudentProfileResponse;
 import com.uniconnect.dto.StudentProfileUpdateRequest;
 import com.uniconnect.model.Student;
 import com.uniconnect.repository.StudentRepository;
 import com.uniconnect.service.StudentProfileService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -25,21 +23,32 @@ import java.util.*;
 public class StudentProfileController {
     private final StudentProfileService studentProfileService;
     private final StudentRepository studentRepository;
-    private static final String CERTIFICATE_UPLOAD_DIR = "uploads/certificates";
-    private static final String DOCUMENT_UPLOAD_DIR = "uploads/documents";
-    private static final String RESUME_UPLOAD_DIR = "uploads/resumes";
+    private final Cloudinary cloudinary;
 
-    public StudentProfileController(StudentProfileService studentProfileService, StudentRepository studentRepository) {
+    @Autowired
+    public StudentProfileController(StudentProfileService studentProfileService, 
+                                     StudentRepository studentRepository,
+                                     Cloudinary cloudinary) {
         this.studentProfileService = studentProfileService;
         this.studentRepository = studentRepository;
+        this.cloudinary = cloudinary;
+    }
+
+    private String uploadToCloudinary(MultipartFile file, String folder) throws IOException {
+        String originalFilename = file.getOriginalFilename();
+        String baseName = originalFilename != null && originalFilename.contains(".")
+            ? originalFilename.substring(0, originalFilename.lastIndexOf(".")) : "file";
+        String publicId = "uniconnect/" + folder + "/" + UUID.randomUUID() + "_" + baseName;
+
+        // Use "auto" resource_type to handle images, docs, etc.
+        @SuppressWarnings("unchecked")
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+            "resource_type", "auto",
+            "public_id", publicId,
+            "folder", "uniconnect"
+        ));
         
-        // Create upload directories if they don't exist
-        for (String dir : new String[]{CERTIFICATE_UPLOAD_DIR, DOCUMENT_UPLOAD_DIR, RESUME_UPLOAD_DIR}) {
-            File uploadDir = new File(dir);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
-            }
-        }
+        return (String) uploadResult.get("secure_url");
     }
 
     @GetMapping
@@ -59,19 +68,12 @@ public class StudentProfileController {
                 return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
             }
 
+            String fileUrl = uploadToCloudinary(file, "certificates");
             String originalFilename = file.getOriginalFilename();
-            String fileExtension = originalFilename != null && originalFilename.contains(".") 
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : "";
-            String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
-
-            Path filePath = Paths.get(CERTIFICATE_UPLOAD_DIR, uniqueFilename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            String fileUrl = "/uploads/certificates/" + uniqueFilename;
+            
             Map<String, String> response = new HashMap<>();
             response.put("url", fileUrl);
-            response.put("filename", uniqueFilename);
+            response.put("filename", originalFilename != null ? originalFilename : "file");
             
             return ResponseEntity.ok(response);
         } catch (IOException e) {
@@ -101,15 +103,7 @@ public class StudentProfileController {
             }
 
             String originalFilename = file.getOriginalFilename();
-            String fileExtension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : "";
-            String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
-
-            Path filePath = Paths.get(DOCUMENT_UPLOAD_DIR, uniqueFilename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            String fileUrl = "/uploads/documents/" + uniqueFilename;
+            String fileUrl = uploadToCloudinary(file, "documents");
 
             // Auto-save to student profile in MongoDB
             Student student = studentOpt.get();
@@ -118,7 +112,8 @@ public class StudentProfileController {
 
             Student.ProfileDocument newDoc = new Student.ProfileDocument(
                 originalFilename != null ? originalFilename : "Document",
-                fileExtension.replace(".", "").toUpperCase(),
+                (originalFilename != null && originalFilename.contains(".") 
+                    ? originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toUpperCase() : "FILE"),
                 fileUrl,
                 LocalDate.now().toString(),
                 false
@@ -189,10 +184,7 @@ public class StudentProfileController {
             }
 
             String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
-            Path filePath = Paths.get(RESUME_UPLOAD_DIR, uniqueFilename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            String fileUrl = "/uploads/resumes/" + uniqueFilename;
+            String fileUrl = uploadToCloudinary(file, "resumes");
 
             // Auto-save to student profile in MongoDB
             Student student = studentOpt.get();

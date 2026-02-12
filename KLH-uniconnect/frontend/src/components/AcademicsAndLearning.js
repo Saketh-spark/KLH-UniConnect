@@ -198,16 +198,24 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
           method: 'POST'
         }).catch(err => console.warn('Could not update download count:', err));
 
-        // Trigger file download
-        const fullUrl = `${API_BASE}${fileUrl}`;
+        // Determine full URL - check if it's already a complete URL (Cloudinary) or a relative path
+        const fullUrl = fileUrl.startsWith('http://') || fileUrl.startsWith('https://') 
+          ? fileUrl 
+          : `${API_BASE}${fileUrl}`;
         console.log('Full download URL:', fullUrl);
         
-        const link = document.createElement('a');
-        link.href = fullUrl;
-        link.download = fileUrl.split('/').pop() || 'download';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // For Cloudinary URLs, open in new tab (better for PDFs and documents)
+        if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+          window.open(fullUrl, '_blank');
+        } else {
+          // For local files, use download link
+          const link = document.createElement('a');
+          link.href = fullUrl;
+          link.download = fileUrl.split('/').pop() || 'download';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
 
         console.log('Download triggered successfully');
 
