@@ -1,11 +1,11 @@
 services:
   # Backend Service
   - type: web
-    name: klh-uniconnect-backend
+    name: klh-uniconnect
     runtime: docker
     plan: free
-    dockerContext: ./backend
-    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./KLH-uniconnect/backend
+    dockerfilePath: ./KLH-uniconnect/backend/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
