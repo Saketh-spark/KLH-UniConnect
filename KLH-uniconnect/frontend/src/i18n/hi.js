@@ -52,6 +52,8 @@ const hi = {
     about: 'हमारे बारे में',
     dashboard: 'डैशबोर्ड',
     backToDashboard: 'डैशबोर्ड',
+    signIn: 'साइन इन',
+    getStarted: 'शुरू करें',
   },
 
   // ── डैशबोर्ड ──
@@ -78,6 +80,10 @@ const hi = {
     academicsDesc: 'नोट्स, असाइनमेंट और उपस्थिति',
     placements: 'प्लेसमेंट',
     placementsDesc: 'नौकरियाँ, रिज्यूमे और साक्षात्कार',
+    ai: 'AI सहायक',
+    aiDesc: '24/7 सीखने और करियर सहायता',
+    events: 'इवेंट्स और क्लब',
+    eventsDesc: 'इवेंट्स और समुदायों का प्रबंधन करें',
     certificates: 'प्रमाणपत्र',
     certificatesDesc: 'उपलब्धियाँ अपलोड और सत्यापित करें',
     chat: 'चैट',

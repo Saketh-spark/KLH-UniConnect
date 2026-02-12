@@ -52,6 +52,8 @@ const en = {
     about: 'About',
     dashboard: 'Dashboard',
     backToDashboard: 'Dashboard',
+    signIn: 'Sign In',
+    getStarted: 'Get Started',
   },
 
   // ── Dashboard ──
@@ -86,8 +88,12 @@ const en = {
     discoverDesc: 'Find people and opportunities',
     aiAssistant: 'AI Assistant',
     aiAssistantDesc: '24/7 learning and career help',
+    ai: 'AI Assistant',
+    aiDesc: '24/7 learning and career help',
     eventsClubs: 'Events & Clubs',
     eventsClubsDesc: 'Manage events and communities',
+    events: 'Events & Clubs',
+    eventsDesc: 'Manage events and communities',
     safety: 'Safety',
     safetyDesc: 'Emergency SOS and reporting',
     analytics: 'Analytics',

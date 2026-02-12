@@ -43,7 +43,6 @@ public class DiscoverController {
             @RequestParam(required = false) String excludeEmail) {
         List<Student> all = studentRepository.findAll();
         return all.stream()
-                .filter(s -> s.getName() != null && !s.getName().trim().isEmpty())
                 .filter(s -> excludeEmail == null || !excludeEmail.equalsIgnoreCase(s.getEmail()))
                 .filter(s -> q == null || q.isEmpty() ||
                         (s.getName() != null && s.getName().toLowerCase().contains(q.toLowerCase())) ||
@@ -69,7 +68,6 @@ public class DiscoverController {
             @RequestParam(required = false) String excludeEmail) {
         List<Faculty> all = facultyRepository.findAll();
         return all.stream()
-                .filter(f -> f.getName() != null && !f.getName().trim().isEmpty())
                 .filter(f -> excludeEmail == null || !excludeEmail.equalsIgnoreCase(f.getEmail()))
                 .filter(f -> q == null || q.isEmpty() ||
                         (f.getName() != null && f.getName().toLowerCase().contains(q.toLowerCase())) ||
@@ -168,14 +166,17 @@ public class DiscoverController {
         List<Student> allStudents = studentRepository.findAll();
         List<Faculty> allFaculty = facultyRepository.findAll();
         int removedStudents = 0, removedFaculty = 0;
+        // Only remove records without BOTH name AND email (invalid records)
         for (Student s : allStudents) {
-            if (s.getName() == null || s.getName().trim().isEmpty()) {
+            if ((s.getName() == null || s.getName().trim().isEmpty()) && 
+                (s.getEmail() == null || s.getEmail().trim().isEmpty())) {
                 studentRepository.delete(s);
                 removedStudents++;
             }
         }
         for (Faculty f : allFaculty) {
-            if (f.getName() == null || f.getName().trim().isEmpty()) {
+            if ((f.getName() == null || f.getName().trim().isEmpty()) && 
+                (f.getEmail() == null || f.getEmail().trim().isEmpty())) {
                 facultyRepository.delete(f);
                 removedFaculty++;
             }
@@ -191,12 +192,8 @@ public class DiscoverController {
     @GetMapping("/stats")
     public Map<String, Object> getDiscoverStats() {
         Map<String, Object> stats = new HashMap<>();
-        long validStudents = studentRepository.findAll().stream()
-            .filter(s -> s.getName() != null && !s.getName().trim().isEmpty()).count();
-        long validFaculty = facultyRepository.findAll().stream()
-            .filter(f -> f.getName() != null && !f.getName().trim().isEmpty()).count();
-        stats.put("totalStudents", validStudents);
-        stats.put("totalFaculty", validFaculty);
+        stats.put("totalStudents", studentRepository.count());
+        stats.put("totalFaculty", facultyRepository.count());
         stats.put("totalOpportunities", jobRepository.count());
         return stats;
     }
@@ -206,7 +203,11 @@ public class DiscoverController {
         Map<String, Object> card = new LinkedHashMap<>();
         card.put("id", s.getId());
         card.put("type", "student");
-        card.put("name", s.getName());
+        // Use email as fallback if name is not set
+        String displayName = (s.getName() != null && !s.getName().trim().isEmpty()) 
+            ? s.getName() 
+            : (s.getEmail() != null ? s.getEmail().split("@")[0] : "Student");
+        card.put("name", displayName);
         card.put("email", s.getEmail());
         card.put("rollNumber", s.getRollNumber());
         card.put("branch", s.getBranch());
@@ -229,7 +230,11 @@ public class DiscoverController {
         Map<String, Object> card = new LinkedHashMap<>();
         card.put("id", f.getId());
         card.put("type", "faculty");
-        card.put("name", f.getName());
+        // Use email as fallback if name is not set
+        String displayName = (f.getName() != null && !f.getName().trim().isEmpty()) 
+            ? f.getName() 
+            : (f.getEmail() != null ? f.getEmail().split("@")[0] : "Faculty");
+        card.put("name", displayName);
         card.put("email", f.getEmail());
         card.put("employeeId", f.getEmployeeId());
         card.put("department", f.getDepartment());
