@@ -75,9 +75,11 @@ const StudentDashboard = ({ email = '', onLogout = () => {}, onModuleSelect = ()
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-black text-white shadow-lg shadow-slate-500/30">
-              K
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="KLH UniConnect" 
+              className="h-12 w-12 rounded-lg object-contain shadow-lg shadow-slate-500/30"
+            />
             <div>
               <p className="text-sm font-semibold text-slate-900">KLH UniConnect</p>
               <p className="text-xs uppercase tracking-[0.5em] text-slate-400">{t('dashboard.student')}</p>
