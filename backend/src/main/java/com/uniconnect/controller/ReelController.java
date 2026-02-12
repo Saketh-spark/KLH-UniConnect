@@ -47,6 +47,45 @@ public class ReelController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Admin endpoint to fix broken video URLs by replacing local uploads with sample videos
+     * Use this when deployed to platforms with ephemeral filesystems (like Render)
+     */
+    @PostMapping("/admin/fix-video-urls")
+    public ResponseEntity<Map<String, Object>> fixBrokenVideoUrls() {
+        List<String> sampleVideos = List.of(
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
+        );
+        
+        List<com.uniconnect.model.Reel> allReels = reelRepository.findAll();
+        int fixedCount = 0;
+        
+        for (int i = 0; i < allReels.size(); i++) {
+            com.uniconnect.model.Reel reel = allReels.get(i);
+            String videoUrl = reel.getVideoUrl();
+            
+            // Fix if URL is a local upload path (starts with /uploads/)
+            if (videoUrl != null && videoUrl.startsWith("/uploads/")) {
+                String newUrl = sampleVideos.get(i % sampleVideos.size());
+                reel.setVideoUrl(newUrl);
+                reelRepository.save(reel);
+                fixedCount++;
+            }
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("totalReels", allReels.size());
+        response.put("fixedCount", fixedCount);
+        response.put("message", "Fixed " + fixedCount + " reel(s) with broken video URLs");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> uploadFiles(
             @RequestParam("video") MultipartFile videoFile,
