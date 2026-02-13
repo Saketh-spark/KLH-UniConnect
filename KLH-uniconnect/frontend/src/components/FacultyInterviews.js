@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, MessageSquare, Star, TrendingUp, AlertCircle, CheckCircle, Calendar, Loader2 } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8085';
+const API_BASE_URL = import.meta.env.VITE_API_BASE ?? 'http://localhost:8085';
 
 const FacultyInterviews = ({ searchTerm, email }) => {
   const [interviews, setInterviews] = useState([]);

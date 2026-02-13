@@ -287,7 +287,7 @@ const FacultyAssignments = ({ selectedSubject, setSelectedSubject, searchTerm })
       return;
     }
     
-    const fullUrl = fileUrl.startsWith('http') ? fileUrl : `http://localhost:8085${fileUrl}`;
+    const fullUrl = fileUrl.startsWith('http') ? fileUrl : `${import.meta.env.VITE_API_BASE ?? 'http://localhost:8085'}${fileUrl}`;
     window.open(fullUrl, '_blank');
   };
 

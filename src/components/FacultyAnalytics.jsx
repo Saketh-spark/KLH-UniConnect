@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8085/api/analytics';
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE ?? 'http://localhost:8085'}/api/analytics`;
 
 const FacultyAnalytics = ({ onBack = () => {}, facultyId = 'FAC001' }) => {
   const [mounted, setMounted] = useState(false);

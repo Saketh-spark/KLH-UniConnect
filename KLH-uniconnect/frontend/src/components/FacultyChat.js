@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Send, Search, Phone, Info, MoreVertical, Paperclip, Smile, X } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8085';
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8085';
 
 const FacultyChat = ({ email = '', onBack = () => {} }) => {
   const [chats, setChats] = useState([]);
