@@ -1,19 +1,17 @@
 package com.uniconnect.controller;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.uniconnect.dto.FacultyProfileResponse;
 import com.uniconnect.dto.FacultyProfileUpdateRequest;
 import com.uniconnect.service.FacultyProfileService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,12 +20,12 @@ import java.util.UUID;
 @CrossOrigin(originPatterns = "*")
 public class FacultyProfileController {
     private final FacultyProfileService facultyProfileService;
-    private static final String UPLOAD_DIR = "uploads/faculty";
+    private final Cloudinary cloudinary;
 
-    public FacultyProfileController(FacultyProfileService facultyProfileService) {
+    @Autowired
+    public FacultyProfileController(FacultyProfileService facultyProfileService, Cloudinary cloudinary) {
         this.facultyProfileService = facultyProfileService;
-        File dir = new File(UPLOAD_DIR);
-        if (!dir.exists()) dir.mkdirs();
+        this.cloudinary = cloudinary;
     }
 
     @GetMapping
@@ -45,11 +43,18 @@ public class FacultyProfileController {
         try {
             if (file.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
             String orig = file.getOriginalFilename();
-            String ext = orig != null && orig.contains(".") ? orig.substring(orig.lastIndexOf(".")) : "";
-            String unique = UUID.randomUUID().toString() + ext;
-            Path path = Paths.get(UPLOAD_DIR, unique);
-            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            return ResponseEntity.ok(Map.of("url", "/uploads/faculty/" + unique, "filename", unique));
+            String baseName = orig != null && orig.contains(".")
+                ? orig.substring(0, orig.lastIndexOf(".")) : "file";
+            String publicId = "uniconnect/faculty/" + UUID.randomUUID() + "_" + baseName;
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                "resource_type", "auto",
+                "public_id", publicId,
+                "folder", "uniconnect"
+            ));
+            String fileUrl = (String) uploadResult.get("secure_url");
+            return ResponseEntity.ok(Map.of("url", fileUrl, "filename", orig != null ? orig : "file"));
         } catch (IOException e) {
             return ResponseEntity.status(500).body(Map.of("error", "Upload failed: " + e.getMessage()));
         }

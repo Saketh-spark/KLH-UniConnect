@@ -105,7 +105,11 @@ export default function StudentProfile({ email, onBack, defaultTab }) {
     try {
       const { data } = await axios.post(`${API}/api/students/profile/upload-certificate`, fd,
         { headers: { 'Content-Type': 'multipart/form-data' } });
-      set(field, data.url); notify('Uploaded!');
+      set(field, data.url);
+      // Auto-save to database immediately so it persists
+      await axios.put(`${API}/api/students/profile`, { email, [field]: data.url });
+      setProfile(p => p ? { ...p, [field]: data.url } : p);
+      notify('Uploaded & saved!');
     } catch (err) { console.error('Upload error:', err); notify('Upload failed – ' + (err.response?.data?.error || 'try again')); }
     setUploading(false);
   };

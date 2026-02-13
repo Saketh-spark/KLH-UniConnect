@@ -110,7 +110,11 @@ export default function FacultyProfile({ email, onBack, defaultTab }) {
     try {
       const { data } = await axios.post(`${API}/api/faculty/profile/upload`, fd,
         { headers: { 'Content-Type': 'multipart/form-data' } });
-      set(fld, data.url); notify('Uploaded!');
+      set(fld, data.url);
+      // Auto-save to database immediately so it persists
+      await axios.put(`${API}/api/faculty/profile`, { email, [fld]: data.url });
+      setProfile(p => p ? { ...p, [fld]: data.url } : p);
+      notify('Uploaded & saved!');
     } catch { notify('Upload failed'); }
   };
 
