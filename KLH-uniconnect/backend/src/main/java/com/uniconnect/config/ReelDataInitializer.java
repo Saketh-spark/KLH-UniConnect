@@ -6,21 +6,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Initialize sample reels in the database on application startup
  */
 @Component
 public class ReelDataInitializer implements CommandLineRunner {
-    private static final Path REEL_UPLOAD_DIR = Paths.get("uploads", "reels");
 
     private final ReelRepository reelRepository;
 
@@ -152,29 +146,14 @@ public class ReelDataInitializer implements CommandLineRunner {
     }
 
     private List<String> loadLocalReelVideos() {
-        if (!Files.exists(REEL_UPLOAD_DIR)) {
-            return List.of();
-        }
-
-        try (Stream<Path> stream = Files.list(REEL_UPLOAD_DIR)) {
-            return stream
-                    .filter(path -> path.toString().toLowerCase().endsWith(".mp4"))
-                    .sorted()
-                    .map(path -> "/uploads/reels/" + path.getFileName())
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            System.out.println("⚠ Warning: Unable to enumerate local reel videos: " + e.getMessage());
-            return List.of();
-        }
+        // All reel videos are stored in Cloudinary — no local files to load
+        return List.of();
     }
 
     private String resolveVideoUrl(List<String> localVideos, List<String> fallbackVideos, int index) {
-        if (index < localVideos.size()) {
-            return localVideos.get(index);
-        }
         if (!fallbackVideos.isEmpty()) {
             return fallbackVideos.get(index % fallbackVideos.size());
         }
-        return "/uploads/reels/default.mp4";
+        return "https://res.cloudinary.com/demo/video/upload/v1689798029/samples/sea-turtle.mp4";
     }
 }

@@ -1,5 +1,7 @@
 package com.uniconnect.controller;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.uniconnect.model.*;
 import com.uniconnect.repository.*;
 import org.springframework.http.HttpStatus;
@@ -7,10 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,6 +27,7 @@ public class PlacementController {
     private final StudentResumeReviewRepository studentResumeReviewRepository;
     private final TrainingMaterialRepository trainingMaterialRepository;
     private final TrainingSessionRepository trainingSessionRepository;
+    private final Cloudinary cloudinary;
 
     public PlacementController(
             JobRepository jobRepository,
@@ -39,7 +38,8 @@ public class PlacementController {
             ResumeRepository resumeRepository,
             StudentResumeReviewRepository studentResumeReviewRepository,
             TrainingMaterialRepository trainingMaterialRepository,
-            TrainingSessionRepository trainingSessionRepository) {
+            TrainingSessionRepository trainingSessionRepository,
+            Cloudinary cloudinary) {
         this.jobRepository = jobRepository;
         this.jobApplicationRepository = jobApplicationRepository;
         this.interviewRepository = interviewRepository;
@@ -49,6 +49,7 @@ public class PlacementController {
         this.studentResumeReviewRepository = studentResumeReviewRepository;
         this.trainingMaterialRepository = trainingMaterialRepository;
         this.trainingSessionRepository = trainingSessionRepository;
+        this.cloudinary = cloudinary;
     }
 
     // ==================== JOB ENDPOINTS ====================
@@ -833,19 +834,19 @@ public class PlacementController {
                 return ResponseEntity.badRequest().body(Map.of("error", "File size exceeds 50MB limit"));
             }
 
-            // Create upload directory
-            String uploadDir = "uploads/placements";
-            new File(uploadDir).mkdirs();
-
-            // Generate unique filename
+            // Upload to Cloudinary
             String originalFilename = file.getOriginalFilename();
-            String ext = originalFilename != null && originalFilename.contains(".")
-                    ? originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
-            String uniqueFilename = java.util.UUID.randomUUID().toString() + ext;
-            Path uploadPath = Paths.get(uploadDir, uniqueFilename);
-            Files.write(uploadPath, file.getBytes());
+            String baseName = originalFilename != null && originalFilename.contains(".")
+                    ? originalFilename.substring(0, originalFilename.lastIndexOf(".")) : "file";
+            String publicId = "uniconnect/placements/" + java.util.UUID.randomUUID() + "_" + baseName;
 
-            String fileUrl = "/" + uploadDir + "/" + uniqueFilename;
+            @SuppressWarnings("unchecked")
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                "resource_type", "auto",
+                "public_id", publicId,
+                "folder", "uniconnect"
+            ));
+            String fileUrl = (String) uploadResult.get("secure_url");
 
             // Update the application with the document URL
             JobApplication application = existing.get();
@@ -907,15 +908,18 @@ public class PlacementController {
             material.setUploadedBy(uploadedBy);
 
             if (file != null && !file.isEmpty()) {
-                String uploadDir = "uploads/training";
-                new File(uploadDir).mkdirs();
                 String originalFilename = file.getOriginalFilename();
-                String ext = originalFilename != null && originalFilename.contains(".")
-                        ? originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
-                String uniqueFilename = java.util.UUID.randomUUID().toString() + ext;
-                Path uploadPath = Paths.get(uploadDir, uniqueFilename);
-                Files.write(uploadPath, file.getBytes());
-                material.setFileUrl("/" + uploadDir + "/" + uniqueFilename);
+                String baseName = originalFilename != null && originalFilename.contains(".")
+                        ? originalFilename.substring(0, originalFilename.lastIndexOf(".")) : "file";
+                String publicId = "uniconnect/training/" + java.util.UUID.randomUUID() + "_" + baseName;
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                    "resource_type", "auto",
+                    "public_id", publicId,
+                    "folder", "uniconnect"
+                ));
+                material.setFileUrl((String) uploadResult.get("secure_url"));
                 material.setOriginalFileName(originalFilename);
                 material.setFileSize(file.getSize());
             }

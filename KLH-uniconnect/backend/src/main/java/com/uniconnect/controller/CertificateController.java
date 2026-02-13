@@ -1,5 +1,7 @@
 package com.uniconnect.controller;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.uniconnect.dto.CertificateResponse;
 import com.uniconnect.model.Achievement;
 import com.uniconnect.repository.AchievementRepository;
@@ -8,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -21,11 +22,12 @@ public class CertificateController {
 
     private final CertificateService certificateService;
     private final AchievementRepository achievementRepository;
-    private static final String ACHIEVEMENT_UPLOAD_DIR = new File("uploads/certificates").getAbsolutePath();
+    private final Cloudinary cloudinary;
 
-    public CertificateController(CertificateService certificateService, AchievementRepository achievementRepository) {
+    public CertificateController(CertificateService certificateService, AchievementRepository achievementRepository, Cloudinary cloudinary) {
         this.certificateService = certificateService;
         this.achievementRepository = achievementRepository;
+        this.cloudinary = cloudinary;
     }
 
     // ============ STUDENT CERTIFICATE ENDPOINTS ============
@@ -308,12 +310,17 @@ public class CertificateController {
             if (file != null && !file.isEmpty()) {
                 String originalFilename = file.getOriginalFilename();
                 achievement.setOriginalFileName(originalFilename);
-                String extension = originalFilename != null && originalFilename.contains(".")
-                    ? originalFilename.substring(originalFilename.lastIndexOf(".")) : ".pdf";
-                String filename = UUID.randomUUID().toString() + extension;
-                File dest = new File(ACHIEVEMENT_UPLOAD_DIR + "/" + filename);
-                file.transferTo(dest);
-                achievement.setProofUrl("/uploads/certificates/" + filename);
+                String baseName = originalFilename != null && originalFilename.contains(".")
+                    ? originalFilename.substring(0, originalFilename.lastIndexOf(".")) : "file";
+                String publicId = "uniconnect/certificates/" + UUID.randomUUID() + "_" + baseName;
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                    "resource_type", "auto",
+                    "public_id", publicId,
+                    "folder", "uniconnect"
+                ));
+                achievement.setProofUrl((String) uploadResult.get("secure_url"));
             }
 
             achievement = achievementRepository.save(achievement);

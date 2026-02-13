@@ -6,7 +6,6 @@ import com.uniconnect.model.Reel;
 import com.uniconnect.repository.MaterialRepository;
 import com.uniconnect.repository.AssignmentRepository;
 import com.uniconnect.repository.ReelRepository;
-import com.uniconnect.util.SampleFileGenerator;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 
@@ -32,10 +31,6 @@ public class DataInitializationService implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         try {
-            // Generate sample files
-            System.out.println("Generating sample material files...");
-            SampleFileGenerator.generateSampleMaterials();
-            
             // Only seed if collection is empty
             if (materialRepository.findAll().isEmpty()) {
                 seedMaterials();
@@ -62,7 +57,7 @@ public class DataInitializationService implements CommandLineRunner {
         m1.setSubject("DBMS");
         m1.setSemester("Sem 4");
         m1.setAuthor("Dr. Rajesh Kumar");
-        m1.setFileUrl("/uploads/materials/dbms-unit1-2.pdf");
+        m1.setFileUrl("");
         m1.setFileSize("12.5 MB");
         m1.setType("PDF");
         m1.setDownloads(245);
@@ -72,7 +67,7 @@ public class DataInitializationService implements CommandLineRunner {
         m2.setSubject("Web Technologies");
         m2.setSemester("Sem 4");
         m2.setAuthor("Prof. Sneha Sharma");
-        m2.setFileUrl("/uploads/materials/web-dev-fundamentals.pdf");
+        m2.setFileUrl("");
         m2.setFileSize("8.3 MB");
         m2.setType("Notes");
         m2.setDownloads(189);
@@ -82,7 +77,7 @@ public class DataInitializationService implements CommandLineRunner {
         m3.setSubject("DSA");
         m3.setSemester("Sem 3");
         m3.setAuthor("Dr. Vikram Singh");
-        m3.setFileUrl("/uploads/materials/dsa-sorting.pdf");
+        m3.setFileUrl("");
         m3.setFileSize("5.2 MB");
         m3.setType("PDF");
         m3.setDownloads(412);
@@ -92,7 +87,7 @@ public class DataInitializationService implements CommandLineRunner {
         m4.setSubject("Operating Systems");
         m4.setSemester("Sem 4");
         m4.setAuthor("Prof. Aditya Patel");
-        m4.setFileUrl("/uploads/materials/os-process-management.pdf");
+        m4.setFileUrl("");
         m4.setFileSize("15.8 MB");
         m4.setType("PPT");
         m4.setDownloads(178);
@@ -102,7 +97,7 @@ public class DataInitializationService implements CommandLineRunner {
         m5.setSubject("Microprocessors");
         m5.setSemester("Sem 3");
         m5.setAuthor("Dr. Priya Mishra");
-        m5.setFileUrl("/uploads/materials/microprocessors-interfacing.pdf");
+        m5.setFileUrl("");
         m5.setFileSize("9.7 MB");
         m5.setType("Notes");
         m5.setDownloads(94);

@@ -1,16 +1,18 @@
 package com.uniconnect.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.uniconnect.dto.CertificateResponse;
 import com.uniconnect.model.Certificate;
 import com.uniconnect.repository.CertificateRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -18,15 +20,12 @@ import java.util.stream.Collectors;
 public class CertificateService {
 
     private final CertificateRepository certificateRepository;
-    private static final String UPLOAD_DIR = new File("uploads/certificates").getAbsolutePath();
+    private final Cloudinary cloudinary;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("M/d/yyyy");
 
-    public CertificateService(CertificateRepository certificateRepository) {
+    public CertificateService(CertificateRepository certificateRepository, Cloudinary cloudinary) {
         this.certificateRepository = certificateRepository;
-        File uploadDir = new File(UPLOAD_DIR);
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
-        }
+        this.cloudinary = cloudinary;
     }
 
     public CertificateResponse uploadCertificate(String studentId, String title, String issuer,
@@ -55,13 +54,17 @@ public class CertificateService {
         if (file != null && !file.isEmpty()) {
             String originalFilename = file.getOriginalFilename();
             certificate.setOriginalFileName(originalFilename);
-            String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : ".pdf";
-            String filename = UUID.randomUUID().toString() + extension;
-            File dest = new File(UPLOAD_DIR + "/" + filename);
-            file.transferTo(dest);
-            certificate.setFileUrl("/uploads/certificates/" + filename);
+            String baseName = originalFilename != null && originalFilename.contains(".")
+                ? originalFilename.substring(0, originalFilename.lastIndexOf(".")) : "file";
+            String publicId = "uniconnect/certificates/" + UUID.randomUUID() + "_" + baseName;
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                "resource_type", "auto",
+                "public_id", publicId,
+                "folder", "uniconnect"
+            ));
+            certificate.setFileUrl((String) uploadResult.get("secure_url"));
         }
 
         certificate = certificateRepository.save(certificate);
@@ -122,11 +125,7 @@ public class CertificateService {
         if (!certificate.getStudentId().equals(studentId)) {
             throw new RuntimeException("Unauthorized");
         }
-        if (certificate.getFileUrl() != null) {
-            String filename = certificate.getFileUrl().replace("/uploads/certificates/", "");
-            File file = new File(UPLOAD_DIR + "/" + filename);
-            if (file.exists()) { file.delete(); }
-        }
+        // Cloudinary files are managed by Cloudinary — no local file to delete
         certificateRepository.delete(certificate);
     }
 

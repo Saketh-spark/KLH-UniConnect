@@ -1,5 +1,7 @@
 package com.uniconnect.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.uniconnect.dto.ConversationResponse;
 import com.uniconnect.dto.GroupResponse;
 import com.uniconnect.dto.MessageResponse;
@@ -17,7 +19,6 @@ import com.uniconnect.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -33,7 +34,7 @@ public class ChatService {
     private final StudentRepository studentRepository;
     private final FacultyRepository facultyRepository;
     private final FollowRequestRepository followRequestRepository;
-    private static final String CHAT_UPLOAD_DIR = new File("uploads/chat").getAbsolutePath();
+    private final Cloudinary cloudinary;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
 
     public ChatService(MessageRepository messageRepository, 
@@ -41,20 +42,15 @@ public class ChatService {
                       ChatGroupRepository chatGroupRepository,
                       StudentRepository studentRepository,
                       FacultyRepository facultyRepository,
-                      FollowRequestRepository followRequestRepository) {
+                      FollowRequestRepository followRequestRepository,
+                      Cloudinary cloudinary) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.chatGroupRepository = chatGroupRepository;
         this.studentRepository = studentRepository;
         this.facultyRepository = facultyRepository;
         this.followRequestRepository = followRequestRepository;
-        
-        // Create chat upload directory
-        File uploadDir = new File(CHAT_UPLOAD_DIR);
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
-            System.out.println("Created chat upload directory: " + CHAT_UPLOAD_DIR);
-        }
+        this.cloudinary = cloudinary;
     }
 
     // User Search - searches both students and faculty
@@ -235,10 +231,18 @@ public class ChatService {
 
     // Upload File
     public String uploadFile(MultipartFile file) throws IOException {
-        String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        File dest = new File(CHAT_UPLOAD_DIR, filename);
-        file.transferTo(dest);
-        return "/uploads/chat/" + filename;
+        String originalFilename = file.getOriginalFilename();
+        String baseName = originalFilename != null && originalFilename.contains(".")
+            ? originalFilename.substring(0, originalFilename.lastIndexOf(".")) : "file";
+        String publicId = "uniconnect/chat/" + UUID.randomUUID() + "_" + baseName;
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+            "resource_type", "auto",
+            "public_id", publicId,
+            "folder", "uniconnect"
+        ));
+        return (String) uploadResult.get("secure_url");
     }
 
     // Get Messages
