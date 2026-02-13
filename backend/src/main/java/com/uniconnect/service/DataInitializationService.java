@@ -3,9 +3,11 @@ package com.uniconnect.service;
 import com.uniconnect.model.Material;
 import com.uniconnect.model.Assignment;
 import com.uniconnect.model.Reel;
+import com.uniconnect.model.Student;
 import com.uniconnect.repository.MaterialRepository;
 import com.uniconnect.repository.AssignmentRepository;
 import com.uniconnect.repository.ReelRepository;
+import com.uniconnect.repository.StudentRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 
@@ -19,13 +21,16 @@ public class DataInitializationService implements CommandLineRunner {
     private final MaterialRepository materialRepository;
     private final AssignmentRepository assignmentRepository;
     private final ReelRepository reelRepository;
+    private final StudentRepository studentRepository;
 
     public DataInitializationService(MaterialRepository materialRepository,
                                     AssignmentRepository assignmentRepository,
-                                    ReelRepository reelRepository) {
+                                    ReelRepository reelRepository,
+                                    StudentRepository studentRepository) {
         this.materialRepository = materialRepository;
         this.assignmentRepository = assignmentRepository;
         this.reelRepository = reelRepository;
+        this.studentRepository = studentRepository;
     }
 
     @Override
@@ -40,6 +45,10 @@ public class DataInitializationService implements CommandLineRunner {
                 seedAssignments();
             }
 
+            if (studentRepository.findAll().isEmpty()) {
+                seedStudents();
+            }
+
             // Reels are no longer seeded with sample data - only real uploads are shown
             // if (reelRepository.findAll().isEmpty()) {
             //     seedReels();
@@ -49,6 +58,46 @@ public class DataInitializationService implements CommandLineRunner {
             System.out.println("  The application will run without sample data. You can still use the API.");
             System.out.println("  Error: " + e.getMessage());
         }
+    }
+
+    private void seedStudents() {
+        String[][] studentData = {
+            {"Saketh Reddy", "saketh@klh.edu.in", "2210030001", "CSE", "3rd Year", "A"},
+            {"Priya Sharma", "priya@klh.edu.in", "2210030002", "CSE", "3rd Year", "A"},
+            {"Aniket Patel", "aniket@klh.edu.in", "2210030003", "CSE", "3rd Year", "A"},
+            {"Neha Gupta", "neha@klh.edu.in", "2210030004", "CSE", "3rd Year", "A"},
+            {"Rohit Kumar", "rohit@klh.edu.in", "2210030005", "CSE", "3rd Year", "A"},
+            {"Divya Singh", "divya@klh.edu.in", "2210030006", "CSE", "3rd Year", "A"},
+            {"Arun Nair", "arun@klh.edu.in", "2210030007", "CSE", "3rd Year", "A"},
+            {"Sneha Verma", "sneha@klh.edu.in", "2210030008", "CSE", "3rd Year", "A"},
+            {"Karthik Reddy", "karthik@klh.edu.in", "2210030009", "CSE", "3rd Year", "A"},
+            {"Meera Joshi", "meera@klh.edu.in", "2210030010", "CSE", "3rd Year", "A"},
+            {"Vikas Yadav", "vikas@klh.edu.in", "2210030011", "CSE", "3rd Year", "B"},
+            {"Pooja Iyer", "pooja@klh.edu.in", "2210030012", "CSE", "3rd Year", "B"},
+            {"Rahul Mehta", "rahul@klh.edu.in", "2210030013", "CSE", "3rd Year", "B"},
+            {"Ananya Das", "ananya@klh.edu.in", "2210030014", "CSE", "3rd Year", "B"},
+            {"Siddharth Rao", "siddharth@klh.edu.in", "2210030015", "CSE", "3rd Year", "B"},
+            {"Kavya Menon", "kavya@klh.edu.in", "2210030016", "CSE", "3rd Year", "B"},
+            {"Arjun Pillai", "arjun@klh.edu.in", "2210030017", "CSE", "3rd Year", "B"},
+            {"Riya Kapoor", "riya@klh.edu.in", "2210030018", "CSE", "3rd Year", "B"},
+            {"Varun Chandra", "varun@klh.edu.in", "2210030019", "CSE", "3rd Year", "B"},
+            {"Lakshmi Prasad", "lakshmi@klh.edu.in", "2210030020", "CSE", "3rd Year", "B"}
+        };
+
+        for (String[] data : studentData) {
+            if (!studentRepository.existsByEmail(data[1])) {
+                Student s = new Student(data[1], "password123", Instant.now());
+                s.setName(data[0]);
+                s.setRollNumber(data[2]);
+                s.setBranch(data[3]);
+                s.setYear(data[4]);
+                s.setSection(data[5]);
+                s.setCourse("B.Tech");
+                s.setSemester("6");
+                studentRepository.save(s);
+            }
+        }
+        System.out.println("✓ Sample students seeded successfully (" + studentData.length + " students)!");
     }
 
     private void seedMaterials() {
