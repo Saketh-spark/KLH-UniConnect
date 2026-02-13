@@ -80,9 +80,9 @@ public class ReelDataInitializer implements CommandLineRunner {
 
         List<String> localVideos = loadLocalReelVideos();
         List<String> fallbackVideos = List.of(
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+            "https://res.cloudinary.com/demo/video/upload/dog.mp4",
+            "https://res.cloudinary.com/demo/video/upload/elephants.mp4",
+            "https://res.cloudinary.com/demo/video/upload/sea-turtle.mp4"
         );
 
         List<Reel> sampleReels = List.of(

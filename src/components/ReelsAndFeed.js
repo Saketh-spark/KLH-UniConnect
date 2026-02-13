@@ -149,7 +149,7 @@ const ReelsAndFeed = ({ studentId, onBack, onRequireSignIn }) => {
           avatar: 'https://via.placeholder.com/40?text=SR',
           uploaderRole: 'STUDENT',
           category: 'Projects',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-library/sample/BigBuckBunny.mp4',
+          videoUrl: 'https://res.cloudinary.com/demo/video/upload/dog.mp4',
           likes: 45,
           comments: 12,
           saves: 8,

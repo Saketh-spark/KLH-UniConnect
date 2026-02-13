@@ -54,12 +54,9 @@ public class ReelController {
     @PostMapping("/admin/fix-video-urls")
     public ResponseEntity<Map<String, Object>> fixBrokenVideoUrls() {
         List<String> sampleVideos = List.of(
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
+            "https://res.cloudinary.com/demo/video/upload/dog.mp4",
+            "https://res.cloudinary.com/demo/video/upload/elephants.mp4",
+            "https://res.cloudinary.com/demo/video/upload/sea-turtle.mp4"
         );
         
         List<com.uniconnect.model.Reel> allReels = reelRepository.findAll();
@@ -69,8 +66,8 @@ public class ReelController {
             com.uniconnect.model.Reel reel = allReels.get(i);
             String videoUrl = reel.getVideoUrl();
             
-            // Fix if URL is a local upload path (starts with /uploads/)
-            if (videoUrl != null && videoUrl.startsWith("/uploads/")) {
+            // Fix if URL is a local upload path or broken Google sample URL
+            if (videoUrl != null && (videoUrl.startsWith("/uploads/") || videoUrl.contains("commondatastorage.googleapis.com"))) {
                 String newUrl = sampleVideos.get(i % sampleVideos.size());
                 reel.setVideoUrl(newUrl);
                 reelRepository.save(reel);

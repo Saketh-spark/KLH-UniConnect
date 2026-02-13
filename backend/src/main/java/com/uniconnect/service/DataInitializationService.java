@@ -167,7 +167,7 @@ public class DataInitializationService implements CommandLineRunner {
             "A comprehensive guide to implementing Quick Sort algorithm with time complexity analysis and real-world applications.",
             "Projects"
         );
-        r1.setVideoUrl("https://commondatastorage.googleapis.com/gtv-videos-library/sample/BigBuckBunny.mp4");
+        r1.setVideoUrl("https://res.cloudinary.com/demo/video/upload/dog.mp4");
         r1.setThumbnailUrl("https://via.placeholder.com/400x600?text=DSA+Project");
         r1.setSubject("DSA");
         r1.setSkill("Data Structures");
@@ -193,7 +193,7 @@ public class DataInitializationService implements CommandLineRunner {
             "Full-stack React application with Redux state management, MongoDB backend, and payment integration.",
             "Projects"
         );
-        r2.setVideoUrl("https://commondatastorage.googleapis.com/gtv-videos-library/sample/ElephantsDream.mp4");
+        r2.setVideoUrl("https://res.cloudinary.com/demo/video/upload/elephants.mp4");
         r2.setThumbnailUrl("https://via.placeholder.com/400x600?text=React+Project");
         r2.setSubject("Web Development");
         r2.setSkill("Frontend");
@@ -220,7 +220,7 @@ public class DataInitializationService implements CommandLineRunner {
             "End-to-end machine learning project using Python, scikit-learn, and pandas to predict real estate prices.",
             "Projects"
         );
-        r3.setVideoUrl("https://commondatastorage.googleapis.com/gtv-videos-library/sample/ForBiggerBlazes.mp4");
+        r3.setVideoUrl("https://res.cloudinary.com/demo/video/upload/sea-turtle.mp4");
         r3.setThumbnailUrl("https://via.placeholder.com/400x600?text=ML+Project");
         r3.setSubject("AI/ML");
         r3.setSkill("Machine Learning");
@@ -247,7 +247,7 @@ public class DataInitializationService implements CommandLineRunner {
             "Learn how to architect and deploy scalable microservices on Amazon Web Services with Docker and Kubernetes.",
             "Projects"
         );
-        r4.setVideoUrl("https://commondatastorage.googleapis.com/gtv-videos-library/sample/ForBiggerEscapes.mp4");
+        r4.setVideoUrl("https://res.cloudinary.com/demo/video/upload/dog.mp4");
         r4.setThumbnailUrl("https://via.placeholder.com/400x600?text=Cloud+Architecture");
         r4.setSubject("Cloud Computing");
         r4.setSkill("Backend");
@@ -274,7 +274,7 @@ public class DataInitializationService implements CommandLineRunner {
             "Complete walkthrough of designing a scalable social media feed system for technical interviews.",
             "Placements"
         );
-        r5.setVideoUrl("https://commondatastorage.googleapis.com/gtv-videos-library/sample/ForBiggerJoyrides.mp4");
+        r5.setVideoUrl("https://res.cloudinary.com/demo/video/upload/elephants.mp4");
         r5.setThumbnailUrl("https://via.placeholder.com/400x600?text=System+Design");
         r5.setSubject("System Design");
         r5.setSkill("Backend");
@@ -301,7 +301,7 @@ public class DataInitializationService implements CommandLineRunner {
             "An innovative IoT solution for campus management that won the annual hackathon.",
             "Achievements"
         );
-        r6.setVideoUrl("https://commondatastorage.googleapis.com/gtv-videos-library/sample/Sintel.mp4");
+        r6.setVideoUrl("https://res.cloudinary.com/demo/video/upload/sea-turtle.mp4");
         r6.setThumbnailUrl("https://via.placeholder.com/400x600?text=Hackathon");
         r6.setSubject("IoT");
         r6.setSkill("Full Stack");
