@@ -254,8 +254,14 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to submit assignment');
+          let errorMsg = 'Failed to submit assignment';
+          try {
+            const errorData = await response.json();
+            errorMsg = errorData.error || errorMsg;
+          } catch (parseErr) {
+            errorMsg = `Server error (${response.status})`;
+          }
+          throw new Error(errorMsg);
         }
 
         const result = await response.json();

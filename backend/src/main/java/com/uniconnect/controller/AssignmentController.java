@@ -19,7 +19,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/assignments")
-@CrossOrigin(origins = {"http://localhost:4173", "http://localhost:5173", "http://localhost:3000"})
 public class AssignmentController {
     private final AssignmentService assignmentService;
     private final AcademicFileUploadService fileUploadService;
@@ -34,14 +33,14 @@ public class AssignmentController {
 
     @GetMapping
     public ResponseEntity<List<AssignmentResponse>> getAllAssignments(
-            @RequestHeader("X-Student-Id") String studentId) {
+            @RequestHeader(value = "X-Student-Id", required = false, defaultValue = "anonymous") String studentId) {
         return ResponseEntity.ok(assignmentService.getAllAssignments(studentId));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<AssignmentResponse> getAssignment(
             @PathVariable String id,
-            @RequestHeader("X-Student-Id") String studentId) {
+            @RequestHeader(value = "X-Student-Id", required = false, defaultValue = "anonymous") String studentId) {
         return ResponseEntity.ok(assignmentService.getAssignmentById(id, studentId));
     }
 
@@ -49,7 +48,7 @@ public class AssignmentController {
     public ResponseEntity<Map<String, Object>> submitAssignment(
             @PathVariable String id,
             @RequestParam("file") MultipartFile file,
-            @RequestHeader("X-Student-Id") String studentId) {
+            @RequestHeader(value = "X-Student-Id", required = false, defaultValue = "anonymous") String studentId) {
         try {
             String fileUrl = fileUploadService.uploadAssignment(file);
             String fileName = file.getOriginalFilename();

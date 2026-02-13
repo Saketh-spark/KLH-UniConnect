@@ -53,6 +53,19 @@ public class AcademicFileUploadService {
         }
 
         String contentType = file.getContentType();
+        // If content type is null, try to determine from filename extension
+        if (contentType == null || contentType.equals("application/octet-stream")) {
+            String originalName = file.getOriginalFilename();
+            if (originalName != null) {
+                String lower = originalName.toLowerCase();
+                if (lower.endsWith(".pdf")) contentType = "application/pdf";
+                else if (lower.endsWith(".doc")) contentType = "application/msword";
+                else if (lower.endsWith(".docx")) contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                else if (lower.endsWith(".ppt")) contentType = "application/vnd.ms-powerpoint";
+                else if (lower.endsWith(".pptx")) contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+                else if (lower.endsWith(".txt")) contentType = "text/plain";
+            }
+        }
         boolean isAllowedType = false;
         for (String allowedType : ALLOWED_DOC_TYPES) {
             if (allowedType.equals(contentType)) {
@@ -62,7 +75,7 @@ public class AcademicFileUploadService {
         }
 
         if (!isAllowedType) {
-            throw new IllegalArgumentException("File type not allowed: " + contentType);
+            throw new IllegalArgumentException("File type not allowed: " + contentType + ". Allowed types: PDF, DOC, DOCX, PPT, PPTX, TXT");
         }
 
         // Upload to Cloudinary
