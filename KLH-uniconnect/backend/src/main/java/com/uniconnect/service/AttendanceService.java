@@ -31,17 +31,21 @@ public class AttendanceService {
         return students.stream()
             .map(s -> {
                 Map<String, String> studentInfo = new HashMap<>();
-                // Use email prefix as studentId to match the student portal login identity
+                // Extract student ID from email (e.g., 2410080030@klh.edu.in → 2410080030)
                 String emailPrefix = (s.getEmail() != null && s.getEmail().contains("@"))
                         ? s.getEmail().split("@")[0] : s.getId();
                 studentInfo.put("studentId", emailPrefix);
-                studentInfo.put("studentName", s.getName() != null ? s.getName() : "Unknown");
-                studentInfo.put("rollNumber", s.getRollNumber() != null ? s.getRollNumber() : emailPrefix);
+                studentInfo.put("studentName", s.getName() != null ? s.getName() : emailPrefix);
+                // Use rollNumber if set, otherwise use the email prefix as roll number
+                studentInfo.put("rollNumber", s.getRollNumber() != null && !s.getRollNumber().isEmpty()
+                        ? s.getRollNumber() : emailPrefix);
                 studentInfo.put("email", s.getEmail());
                 studentInfo.put("branch", s.getBranch() != null ? s.getBranch() : "");
                 studentInfo.put("year", s.getYear() != null ? s.getYear() : "");
+                studentInfo.put("section", s.getSection() != null ? s.getSection() : "");
                 return studentInfo;
             })
+            .sorted((a, b) -> a.getOrDefault("rollNumber", "").compareTo(b.getOrDefault("rollNumber", "")))
             .collect(Collectors.toList());
     }
 
