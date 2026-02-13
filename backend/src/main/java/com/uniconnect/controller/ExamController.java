@@ -16,7 +16,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/exams")
-@CrossOrigin(origins = "*")
 public class ExamController {
     private final ExamService examService;
     private final QuestionGeneratorService questionGeneratorService;

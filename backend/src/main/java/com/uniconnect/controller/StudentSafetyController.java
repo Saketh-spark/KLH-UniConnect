@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/safety")
-@CrossOrigin(origins = "*")
 public class StudentSafetyController {
 
     @Autowired private SosAlertRepository sosAlertRepo;
