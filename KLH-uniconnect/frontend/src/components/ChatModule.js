@@ -1170,16 +1170,16 @@ export default function ChatModule({ email, onBack, userRole = 'student', openWi
             {msg.type === 'image' && msg.fileUrl && (
               <div className="mb-2">
                 <img
-                  src={`${API_BASE}${msg.fileUrl}`}
+                  src={msg.fileUrl.startsWith('http') ? msg.fileUrl : `${API_BASE}${msg.fileUrl}`}
                   alt={msg.fileName || 'Image'}
                   className="max-w-full rounded-lg max-h-60 object-cover cursor-pointer"
-                  onClick={() => window.open(`${API_BASE}${msg.fileUrl}`, '_blank')}
+                  onClick={() => window.open(msg.fileUrl.startsWith('http') ? msg.fileUrl : `${API_BASE}${msg.fileUrl}`, '_blank')}
                 />
               </div>
             )}
             {msg.type === 'file' && msg.fileUrl && (
               <a
-                href={`${API_BASE}${msg.fileUrl}`}
+                href={msg.fileUrl.startsWith('http') ? msg.fileUrl : `${API_BASE}${msg.fileUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`flex items-center gap-2 mb-1 px-3 py-2 rounded-lg ${isMine ? 'bg-blue-700/50' : 'bg-white'}`}

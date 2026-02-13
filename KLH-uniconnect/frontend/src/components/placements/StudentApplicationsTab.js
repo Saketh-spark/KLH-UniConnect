@@ -258,7 +258,7 @@ const StudentApplicationsTab = ({ studentId, email }) => {
                                 {doc.label}
                               </button>
                               {hasFile && (
-                                <a href={`${API_BASE}${app[doc.urlField]}`} target="_blank" rel="noreferrer"
+                                <a href={app[doc.urlField]?.startsWith('http') ? app[doc.urlField] : `${API_BASE}${app[doc.urlField]}`} target="_blank" rel="noreferrer"
                                   className="text-sky-600 hover:text-sky-700">
                                   <Eye size={14} />
                                 </a>

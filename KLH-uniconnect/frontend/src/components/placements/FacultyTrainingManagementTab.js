@@ -171,7 +171,7 @@ const FacultyTrainingManagementTab = ({ email, onBack }) => {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs text-slate-400">{mat.downloads} downloads</span>
-              {mat.fileUrl && <a href={`${API_BASE}${mat.fileUrl}`} target="_blank" rel="noreferrer" className="text-sky-500 hover:text-sky-700 text-xs font-medium">View</a>}
+              {mat.fileUrl && <a href={mat.fileUrl.startsWith('http') ? mat.fileUrl : `${API_BASE}${mat.fileUrl}`} target="_blank" rel="noreferrer" className="text-sky-500 hover:text-sky-700 text-xs font-medium">View</a>}
               <button onClick={() => deleteMaterial(mat.id)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
             </div>
           </div>

@@ -400,7 +400,7 @@ const FacultyNotesAndMaterials = ({ selectedSubject = 'all', setSelectedSubject,
                 <div className="flex gap-2">
                   {material.fileUrl && (
                     <a
-                      href={`${API_BASE}${material.fileUrl}`}
+                      href={material.fileUrl.startsWith('http') ? material.fileUrl : `${API_BASE}${material.fileUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="rounded-lg bg-green-100 p-2 text-green-600 transition hover:bg-green-200"

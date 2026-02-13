@@ -572,14 +572,14 @@ const Chat = ({ studentId, email, onBack }) => {
                           }`}>
                             {msg.type === 'image' && msg.fileUrl && (
                               <img
-                                src={`${API_BASE}${msg.fileUrl}`}
+                                src={msg.fileUrl.startsWith('http') ? msg.fileUrl : `${API_BASE}${msg.fileUrl}`}
                                 alt="Shared"
                                 className="rounded mb-2 max-w-full"
                               />
                             )}
                             {msg.type === 'file' && msg.fileUrl && (
                               <a
-                                href={`${API_BASE}${msg.fileUrl}`}
+                                href={msg.fileUrl.startsWith('http') ? msg.fileUrl : `${API_BASE}${msg.fileUrl}`}
                                 download={msg.fileName}
                                 className="flex items-center space-x-2 text-sm hover:underline"
                               >

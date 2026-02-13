@@ -198,7 +198,7 @@ const FacultyCertificates = ({ email = '', onBack = () => {} }) => {
                         {cert.credentialUrl && <a href={cert.credentialUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"><Globe size={12} />Verify Credential</a>}
                       </div>
                       <div className="flex items-center gap-2">
-                        {cert.fileUrl && <a href={`${API_BASE}${cert.fileUrl}`} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200" title="View file"><Eye size={16} /></a>}
+                        {cert.fileUrl && <a href={cert.fileUrl.startsWith('http') ? cert.fileUrl : `${API_BASE}${cert.fileUrl}`} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200" title="View file"><Eye size={16} /></a>}
                         <button onClick={() => handleApprove(cert.id)} disabled={actionLoading[cert.id] === 'approve'} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
                           {actionLoading[cert.id] === 'approve' ? '...' : 'Approve'}
                         </button>
@@ -232,7 +232,7 @@ const FacultyCertificates = ({ email = '', onBack = () => {} }) => {
                         {a.description && <p className="mt-1 text-xs text-slate-500">{a.description}</p>}
                       </div>
                       <div className="flex items-center gap-2">
-                        {a.proofUrl && <a href={`${API_BASE}${a.proofUrl}`} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200"><Eye size={16} /></a>}
+                        {a.proofUrl && <a href={a.proofUrl.startsWith('http') ? a.proofUrl : `${API_BASE}${a.proofUrl}`} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200"><Eye size={16} /></a>}
                         <button onClick={() => handleVerifyAchievement(a.id)} disabled={actionLoading[`ach-${a.id}`] === 'verify'} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
                           {actionLoading[`ach-${a.id}`] === 'verify' ? '...' : 'Verify'}
                         </button>
@@ -302,7 +302,7 @@ const FacultyCertificates = ({ email = '', onBack = () => {} }) => {
                   <td className="py-3 pr-4">{statusBadge(cert.status)}</td>
                   <td className="py-3">
                     <div className="flex items-center gap-1">
-                      {cert.fileUrl && <a href={`${API_BASE}${cert.fileUrl}`} target="_blank" rel="noreferrer" className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-blue-600"><Eye size={14} /></a>}
+                      {cert.fileUrl && <a href={cert.fileUrl.startsWith('http') ? cert.fileUrl : `${API_BASE}${cert.fileUrl}`} target="_blank" rel="noreferrer" className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-blue-600"><Eye size={14} /></a>}
                       {cert.status === 'pending' && (
                         <>
                           <button onClick={() => handleApprove(cert.id)} className="rounded-lg p-1.5 text-slate-500 hover:bg-emerald-100 hover:text-emerald-600" title="Approve"><CheckCircle size={14} /></button>
@@ -352,7 +352,7 @@ const FacultyCertificates = ({ email = '', onBack = () => {} }) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {a.proofUrl && <a href={`${API_BASE}${a.proofUrl}`} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200"><Eye size={14} /></a>}
+                  {a.proofUrl && <a href={a.proofUrl.startsWith('http') ? a.proofUrl : `${API_BASE}${a.proofUrl}`} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200"><Eye size={14} /></a>}
                   {a.status === 'pending' && (
                     <>
                       <button onClick={() => handleVerifyAchievement(a.id)} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">Verify</button>

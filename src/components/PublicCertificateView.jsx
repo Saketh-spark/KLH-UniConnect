@@ -32,7 +32,7 @@ const PublicCertificateView = ({ shareLink }) => {
 
   const handleDownload = () => {
     if (!certificate.fileUrl) return;
-    const fullUrl = `${API_BASE}${certificate.fileUrl}`;
+    const fullUrl = certificate.fileUrl.startsWith('http') ? certificate.fileUrl : `${API_BASE}${certificate.fileUrl}`;
     const link = document.createElement('a');
     link.href = fullUrl;
     link.download = certificate.title.replace(/[^a-z0-9]/gi, '_') + '.pdf';

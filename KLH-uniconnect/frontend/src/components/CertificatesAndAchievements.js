@@ -57,7 +57,7 @@ const CertificatesAndAchievements = ({ studentId, onBack }) => {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleDownload = (cert) => {
-    if (cert.fileUrl) window.open(`${API_BASE}${cert.fileUrl}`, '_blank');
+    if (cert.fileUrl) window.open(cert.fileUrl.startsWith('http') ? cert.fileUrl : `${API_BASE}${cert.fileUrl}`, '_blank');
   };
 
   const handleShare = async (cert) => {

@@ -37,7 +37,7 @@ const StudentTrainingTab = ({ studentId, email }) => {
   const handleDownload = async (mat) => {
     try {
       await axios.put(`${API_BASE}/api/placements/training/materials/${mat.id}/download`);
-      if (mat.fileUrl) window.open(`${API_BASE}${mat.fileUrl}`, '_blank');
+      if (mat.fileUrl) window.open(mat.fileUrl.startsWith('http') ? mat.fileUrl : `${API_BASE}${mat.fileUrl}`, '_blank');
     } catch (e) { console.error(e); }
   };
 
