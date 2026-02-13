@@ -12,6 +12,10 @@ public class AssignmentResponse {
     private Integer marks;
     private Integer totalMarks;
     private String feedback;
+    private String fileUrl;
+    private String fileName;
+    private String submittedAt;
+    private String createdAt;
 
     // Constructors
     public AssignmentResponse() {}
@@ -104,4 +108,16 @@ public class AssignmentResponse {
     public void setFeedback(String feedback) {
         this.feedback = feedback;
     }
+
+    public String getFileUrl() { return fileUrl; }
+    public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
+
+    public String getFileName() { return fileName; }
+    public void setFileName(String fileName) { this.fileName = fileName; }
+
+    public String getSubmittedAt() { return submittedAt; }
+    public void setSubmittedAt(String submittedAt) { this.submittedAt = submittedAt; }
+
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 }

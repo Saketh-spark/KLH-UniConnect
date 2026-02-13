@@ -120,7 +120,7 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
     } catch (err) {
       console.error('Error fetching materials:', err);
       setError(err.message);
-      setMaterials(mockMaterials); // Fallback to mock data
+      setMaterials([]);
     } finally {
       setLoading(false);
     }
@@ -142,7 +142,7 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
     } catch (err) {
       console.error('Error fetching assignments:', err);
       setError(err.message);
-      setAssignments(mockAssignments); // Fallback to mock data
+      setAssignments([]);
     } finally {
       setLoading(false);
     }
@@ -185,14 +185,7 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
 
       console.log('Starting download for material:', materialId, 'URL:', fileUrl);
 
-      // Show loading state
-      const downloadBtn = event.target.closest('button');
-      if (downloadBtn) {
-        downloadBtn.disabled = true;
-        downloadBtn.innerHTML = '<span>Downloading...</span>';
-      }
-
-      try {
+      {
         // Increment download count
         await fetch(`${API_BASE}/api/materials/${materialId}/download`, {
           method: 'POST'
@@ -223,11 +216,6 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
         setTimeout(() => {
           fetchMaterials();
         }, 1000);
-      } finally {
-        if (downloadBtn) {
-          downloadBtn.disabled = false;
-          downloadBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Download';
-        }
       }
     } catch (err) {
       console.error('Download error:', err);
@@ -286,30 +274,22 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
     fileInput.click();
   };
 
-  // Animated counter effect
+  // Compute assignment stats from real data
   useEffect(() => {
     if (!mounted) return;
+    const total = assignments.length;
+    const pending = assignments.filter(a => a.status === 'Pending').length;
+    const submitted = assignments.filter(a => a.status === 'Submitted').length;
+    const overdue = assignments.filter(a => a.status === 'Overdue' || (a.isOverdue && a.status !== 'Graded' && a.status !== 'Submitted')).length;
+    const graded = assignments.filter(a => a.status === 'Graded').length;
 
-    const animateValue = (start, end, duration) => {
-      let startTimestamp = null;
-      const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        return Math.floor(progress * (end - start) + start);
-      };
-      return step;
-    };
-
-    const counters = {
-      cgpa: 8.5,
-      attendance: 85.3,
-      assignments: 21,
-      pending: 2,
-      overdue: 2
-    };
-
-    setStats(counters);
-  }, [mounted]);
+    setStats(prev => ({
+      ...prev,
+      assignments: total,
+      pending: pending + submitted,
+      overdue: overdue
+    }));
+  }, [mounted, assignments]);
 
   const tabs = [
     { id: 'notes', label: 'Notes & Materials', icon: BookOpen },
@@ -321,140 +301,6 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
 
   const fileTypeFilters = ['All', 'PPT', 'Notes', 'PDF', 'Document'];
   const semesterFilters = ['All', 'Sem 3', 'Sem 4'];
-
-  const mockMaterials = [
-    {
-      id: 1,
-      title: 'Database Management Systems – Unit 1 & 2',
-      subject: 'DBMS',
-      semester: 'Sem 4',
-      author: 'Dr. Rajesh Kumar',
-      date: '2024-11-20',
-      fileSize: '12.5 MB',
-      downloads: 245,
-      type: 'PDF',
-      icon: FileJson,
-      fileUrl: null // Sample data - no actual file
-    },
-    {
-      id: 2,
-      title: 'Web Development Fundamentals',
-      subject: 'Web Technologies',
-      semester: 'Sem 4',
-      author: 'Prof. Sneha Sharma',
-      date: '2024-11-18',
-      fileSize: '8.3 MB',
-      downloads: 189,
-      type: 'Notes',
-      icon: FileText,
-      fileUrl: null // Sample data - no actual file
-    },
-    {
-      id: 3,
-      title: 'Data Structures & Algorithms – Sorting',
-      subject: 'DSA',
-      semester: 'Sem 3',
-      author: 'Dr. Vikram Singh',
-      date: '2024-11-15',
-      fileSize: '5.2 MB',
-      downloads: 412,
-      type: 'PDF',
-      icon: FileJson,
-      fileUrl: null // Sample data - no actual file
-    },
-    {
-      id: 4,
-      title: 'Operating Systems – Process Management',
-      subject: 'Operating Systems',
-      semester: 'Sem 4',
-      author: 'Prof. Aditya Patel',
-      date: '2024-11-12',
-      fileSize: '15.8 MB',
-      downloads: 178,
-      type: 'PPT',
-      icon: FileSpreadsheet,
-      fileUrl: null // Sample data - no actual file
-    },
-    {
-      id: 5,
-      title: 'Microprocessors & Interfacing',
-      subject: 'Microprocessors',
-      semester: 'Sem 3',
-      author: 'Dr. Priya Mishra',
-      date: '2024-11-10',
-      fileSize: '9.7 MB',
-      downloads: 94,
-      type: 'Notes',
-      icon: FileText,
-      fileUrl: null // Sample data - no actual file
-    }
-  ];
-
-  const mockAssignments = [
-    {
-      id: 1,
-      title: 'Implement Sorting Algorithms',
-      subject: 'DSA',
-      description: 'Implement and compare Quick Sort, Merge Sort, and Heap Sort with time complexity analysis',
-      dueDate: '12/20/2024',
-      isOverdue: true,
-      daysOverdue: 378,
-      status: 'Pending',
-      marks: null,
-      totalMarks: 25
-    },
-    {
-      id: 2,
-      title: 'Microcontroller Programming Project',
-      subject: 'Microprocessors',
-      description: 'Program an 8085 microcontroller to control LED patterns',
-      dueDate: '12/25/2024',
-      isOverdue: true,
-      daysOverdue: 373,
-      status: 'Pending',
-      marks: null,
-      totalMarks: 30
-    },
-    {
-      id: 3,
-      title: 'Design a Relational Database Schema',
-      subject: 'DBMS',
-      description: 'Design a database for an e-commerce platform with 5+ tables',
-      dueDate: '12/10/2024',
-      isOverdue: false,
-      status: 'Graded',
-      marks: 18,
-      totalMarks: 20,
-      feedback: '"Good schema design! Consider adding indexes for better performance."'
-    },
-    {
-      id: 4,
-      title: 'Build a Personal Portfolio Website',
-      subject: 'Web Technologies',
-      description: 'Create a responsive website showcasing your projects using HTML, CSS, and JavaScript',
-      dueDate: '12/15/2024',
-      isOverdue: false,
-      status: 'Graded',
-      marks: 19,
-      totalMarks: 20,
-      feedback: '"Excellent design and functionality! Mobile responsiveness is perfect."'
-    },
-    {
-      id: 5,
-      title: 'Process Scheduling Algorithms',
-      subject: 'Operating Systems',
-      description: 'Simulate and analyze FCFS, SJF, and Round Robin scheduling algorithms',
-      dueDate: '12/8/2024',
-      isOverdue: true,
-      daysOverdue: 390,
-      status: 'Overdue',
-      marks: null,
-      totalMarks: 20
-    }
-  ];
-
-  const displayMaterials = materials.length > 0 ? materials : mockMaterials;
-  const displayAssignments = assignments.length > 0 ? assignments : mockAssignments;
 
   const subjects = [
     {
@@ -544,7 +390,7 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
     }
   ];
 
-  const filteredMaterials = displayMaterials.filter(material => {
+  const filteredMaterials = materials.filter(material => {
     const matchesSearch =
       material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       material.subject.toLowerCase().includes(searchQuery.toLowerCase());
@@ -584,15 +430,14 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
       <div className="bg-white border-b border-slate-200">
         <div className="mx-auto max-w-6xl px-6 py-8">
           <div
-            className={`grid gap-8 md:grid-cols-5 transform transition duration-500 ${
+            className={`grid gap-8 md:grid-cols-4 transform transition duration-500 ${
               mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
             style={{ transitionDelay: '100ms' }}
           >
             {[
-              { label: 'CGPA', value: stats.cgpa, suffix: '' },
               { label: 'Avg Attendance', value: stats.attendance, suffix: '%' },
-              { label: 'Assignments', value: `${stats.assignments}/25`, suffix: '' },
+              { label: 'Total Assignments', value: stats.assignments, suffix: '' },
               { label: 'Pending', value: stats.pending, suffix: '', color: 'text-yellow-600' },
               { label: 'Overdue', value: stats.overdue, suffix: '', color: 'text-red-600' }
             ].map((stat, idx) => (
@@ -784,6 +629,21 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
                 <Loader size={48} className="mb-4 animate-spin text-sky-600" />
                 <p className="text-lg font-semibold text-slate-600">Loading assignments...</p>
               </div>
+            ) : error && assignments.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <AlertCircle size={48} className="mb-4 text-red-400" />
+                <p className="text-lg font-semibold text-slate-600">Error loading assignments</p>
+                <p className="text-sm text-slate-500 mt-2">{error}</p>
+                <button onClick={fetchAssignments} className="mt-4 rounded-full bg-sky-600 px-6 py-2 text-sm font-semibold text-white hover:bg-sky-700 transition">
+                  Retry
+                </button>
+              </div>
+            ) : assignments.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <FileText size={48} className="mb-4 text-slate-300" />
+                <p className="text-lg font-semibold text-slate-600">No assignments yet</p>
+                <p className="text-sm text-slate-500 mt-2">Assignments will appear here once your faculty creates them.</p>
+              </div>
             ) : (
               <div
                 className={`space-y-4 mb-12 transform transition duration-500 ${
@@ -791,102 +651,151 @@ const AcademicsAndLearning = ({ onBack = () => {}, studentId = null, onModuleSel
                 }`}
                 style={{ transitionDelay: '250ms' }}
               >
-                {[...displayAssignments].sort((a, b) => {
-                  // Recently uploaded first, most overdue last
-                  if (a.isOverdue && !b.isOverdue) return 1;
-                  if (!a.isOverdue && b.isOverdue) return -1;
-                  if (a.isOverdue && b.isOverdue) return (b.daysOverdue || 0) - (a.daysOverdue || 0);
-                  return new Date(b.dueDate || b.date || 0) - new Date(a.dueDate || a.date || 0);
-                }).map((assignment, index) => (
-              <div
-                key={assignment.id}
-                className={`rounded-[16px] border-l-4 ${
-                  assignment.status === 'Graded'
-                    ? 'border-l-emerald-500 bg-emerald-50 border border-emerald-200'
-                    : assignment.isOverdue
-                    ? 'border-l-red-500 bg-red-50 border border-red-200'
-                    : 'border-l-yellow-500 bg-yellow-50 border border-yellow-200'
-                } p-6 shadow-sm transition duration-300 hover:shadow-md transform ${
-                  mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                }`}
-                style={{ transitionDelay: `${250 + index * 50}ms` }}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-bold text-slate-900">{assignment.title}</h3>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          assignment.status === 'Graded'
-                            ? 'bg-emerald-200 text-emerald-800'
-                            : assignment.status === 'Overdue'
-                            ? 'bg-red-200 text-red-800'
-                            : 'bg-yellow-200 text-yellow-800'
-                        }`}
-                      >
-                        {assignment.status === 'Graded' && '🟢'} {assignment.status === 'Overdue' && '🔴'}{' '}
-                        {assignment.status === 'Pending' && '🟡'} {assignment.status}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-600">{assignment.subject}</p>
-                    <p className="mt-2 text-sm text-slate-700">{assignment.description}</p>
-
-                    <div className="mt-4 flex flex-wrap items-center gap-6 text-sm">
-                      <div>
-                        <span className="font-semibold text-slate-700">Due Date:</span>
-                        <span className="ml-2 text-slate-600">{assignment.dueDate}</span>
-                      </div>
-                      <div>
-                        <span className="font-semibold text-slate-700">Time Left:</span>
-                        <span
-                          className={`ml-2 font-semibold ${assignment.isOverdue ? 'text-red-600' : 'text-green-600'}`}
-                        >
-                          {assignment.isOverdue ? `${assignment.daysOverdue} days overdue` : 'On Track'}
-                        </span>
-                      </div>
-                      {assignment.status === 'Graded' && (
-                        <div>
-                          <span className="font-semibold text-slate-700">Marks:</span>
-                          <span className="ml-2 font-bold text-slate-900">
-                            {assignment.marks}/{assignment.totalMarks}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {assignment.feedback && (
-                      <div className="mt-3 rounded-[8px] bg-white bg-opacity-60 p-3 text-sm italic text-slate-700">
-                        Faculty Feedback: {assignment.feedback}
-                      </div>
-                    )}
-                  </div>
-
-                  {assignment.status !== 'Graded' && (
-                    <button 
-                      onClick={() => handleSubmitAssignment(assignment.id)}
-                      disabled={submittingAssignmentId === assignment.id}
-                      className="flex items-center gap-2 whitespace-nowrap rounded-full bg-sky-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:bg-slate-400 disabled:cursor-not-allowed"
-                    >
-                      {submittingAssignmentId === assignment.id ? (
-                        <>
-                          <Loader size={16} className="animate-spin" />
-                          Submitting...
-                        </>
-                      ) : (
-                        <>
-                          <UploadIcon size={16} />
-                          Submit
-                        </>
-                      )}
-                    </button>
-                  )}
+                {/* Status Legend */}
+                <div className="flex flex-wrap gap-3 mb-2">
+                  {[
+                    { label: 'Pending', color: 'bg-yellow-200 text-yellow-800', icon: '🟡' },
+                    { label: 'Submitted', color: 'bg-blue-200 text-blue-800', icon: '🔵' },
+                    { label: 'Overdue', color: 'bg-red-200 text-red-800', icon: '🔴' },
+                    { label: 'Graded', color: 'bg-emerald-200 text-emerald-800', icon: '🟢' }
+                  ].map(s => (
+                    <span key={s.label} className={`rounded-full px-3 py-1 text-xs font-semibold ${s.color}`}>
+                      {s.icon} {s.label}
+                    </span>
+                  ))}
                 </div>
+
+                {assignments.map((assignment, index) => {
+                  const statusConfig = {
+                    'Graded': { border: 'border-l-emerald-500', bg: 'bg-emerald-50', borderOuter: 'border-emerald-200', badge: 'bg-emerald-200 text-emerald-800', icon: '🟢' },
+                    'Submitted': { border: 'border-l-blue-500', bg: 'bg-blue-50', borderOuter: 'border-blue-200', badge: 'bg-blue-200 text-blue-800', icon: '🔵' },
+                    'Overdue': { border: 'border-l-red-500', bg: 'bg-red-50', borderOuter: 'border-red-200', badge: 'bg-red-200 text-red-800', icon: '🔴' },
+                    'Pending': { border: 'border-l-yellow-500', bg: 'bg-yellow-50', borderOuter: 'border-yellow-200', badge: 'bg-yellow-200 text-yellow-800', icon: '🟡' }
+                  };
+                  const config = statusConfig[assignment.status] || statusConfig['Pending'];
+                  const canResubmit = assignment.status === 'Submitted' && !assignment.isOverdue;
+
+                  return (
+                    <div
+                      key={assignment.id}
+                      className={`rounded-[16px] border-l-4 ${config.border} ${config.bg} border ${config.borderOuter} p-6 shadow-sm transition duration-300 hover:shadow-md transform ${
+                        mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                      }`}
+                      style={{ transitionDelay: `${250 + index * 50}ms` }}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <h3 className="text-lg font-bold text-slate-900">{assignment.title}</h3>
+                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${config.badge}`}>
+                              {config.icon} {assignment.status}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm text-slate-600">{assignment.subject}</p>
+                          <p className="mt-2 text-sm text-slate-700">{assignment.description}</p>
+
+                          <div className="mt-4 flex flex-wrap items-center gap-6 text-sm">
+                            <div>
+                              <span className="font-semibold text-slate-700">Due Date:</span>
+                              <span className="ml-2 text-slate-600">{assignment.dueDate}</span>
+                            </div>
+                            <div>
+                              <span className="font-semibold text-slate-700">Time Left:</span>
+                              <span className={`ml-2 font-semibold ${assignment.isOverdue ? 'text-red-600' : 'text-green-600'}`}>
+                                {assignment.isOverdue ? `${assignment.daysOverdue} days overdue` : 'On Track'}
+                              </span>
+                            </div>
+                            {assignment.totalMarks && (
+                              <div>
+                                <span className="font-semibold text-slate-700">Total Marks:</span>
+                                <span className="ml-2 text-slate-600">{assignment.totalMarks}</span>
+                              </div>
+                            )}
+                            {assignment.status === 'Graded' && (
+                              <div>
+                                <span className="font-semibold text-slate-700">Marks:</span>
+                                <span className="ml-2 font-bold text-emerald-700">
+                                  {assignment.marks}/{assignment.totalMarks}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Show submitted file info */}
+                          {(assignment.status === 'Submitted' || assignment.status === 'Graded') && assignment.fileName && (
+                            <div className="mt-3 flex items-center gap-2 text-sm">
+                              <FileText size={14} className="text-blue-500" />
+                              <span className="text-slate-600">Submitted file:</span>
+                              {assignment.fileUrl ? (
+                                <a href={assignment.fileUrl} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline font-medium">
+                                  {assignment.fileName}
+                                </a>
+                              ) : (
+                                <span className="text-slate-700 font-medium">{assignment.fileName}</span>
+                              )}
+                              {assignment.submittedAt && (
+                                <span className="text-slate-400 text-xs ml-1">• {new Date(assignment.submittedAt).toLocaleDateString()}</span>
+                              )}
+                            </div>
+                          )}
+
+                          {assignment.feedback && (
+                            <div className="mt-3 rounded-[8px] bg-white bg-opacity-60 p-3 text-sm italic text-slate-700">
+                              Faculty Feedback: {assignment.feedback}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex flex-col gap-2">
+                          {assignment.status === 'Pending' && (
+                            <button
+                              onClick={() => handleSubmitAssignment(assignment.id)}
+                              disabled={submittingAssignmentId === assignment.id}
+                              className="flex items-center gap-2 whitespace-nowrap rounded-full bg-sky-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:bg-slate-400 disabled:cursor-not-allowed"
+                            >
+                              {submittingAssignmentId === assignment.id ? (
+                                <><Loader size={16} className="animate-spin" /> Submitting...</>
+                              ) : (
+                                <><UploadIcon size={16} /> Submit</>
+                              )}
+                            </button>
+                          )}
+                          {assignment.status === 'Overdue' && (
+                            <button
+                              onClick={() => handleSubmitAssignment(assignment.id)}
+                              disabled={submittingAssignmentId === assignment.id}
+                              className="flex items-center gap-2 whitespace-nowrap rounded-full bg-red-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:bg-slate-400 disabled:cursor-not-allowed"
+                            >
+                              {submittingAssignmentId === assignment.id ? (
+                                <><Loader size={16} className="animate-spin" /> Submitting...</>
+                              ) : (
+                                <><UploadIcon size={16} /> Submit Late</>
+                              )}
+                            </button>
+                          )}
+                          {canResubmit && (
+                            <button
+                              onClick={() => handleSubmitAssignment(assignment.id)}
+                              disabled={submittingAssignmentId === assignment.id}
+                              className="flex items-center gap-2 whitespace-nowrap rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed"
+                            >
+                              {submittingAssignmentId === assignment.id ? (
+                                <><Loader size={16} className="animate-spin" /> Uploading...</>
+                              ) : (
+                                <><UploadIcon size={16} /> Edit Submission</>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
-      </>
-    )}
 
         {/* Tests & Exams Tab */}
         {activeTab === 'tests' && (

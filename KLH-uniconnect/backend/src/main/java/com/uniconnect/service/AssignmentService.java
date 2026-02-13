@@ -66,7 +66,7 @@ public class AssignmentService {
     }
 
     public List<FacultyAssignmentResponse> getAllAssignmentsForFaculty(String facultyId) {
-        List<Assignment> assignments = assignmentRepository.findAll();
+        List<Assignment> assignments = assignmentRepository.findByCreatedByOrderByCreatedAtDesc(facultyId);
         
         return assignments.stream()
                 .map(this::convertToFacultyResponse)
@@ -188,7 +188,7 @@ public class AssignmentService {
     // ========== STUDENT METHODS ==========
 
     public List<AssignmentResponse> getAllAssignments(String studentId) {
-        List<Assignment> assignments = assignmentRepository.findAll();
+        List<Assignment> assignments = assignmentRepository.findAllByOrderByCreatedAtDesc();
         
         return assignments.stream()
                 .map(assignment -> convertToResponse(assignment, studentId))
@@ -256,9 +256,17 @@ public class AssignmentService {
             response.setStatus(sub.getStatus());
             response.setMarks(sub.getMarksObtained());
             response.setFeedback(sub.getFeedback());
+            response.setFileUrl(sub.getFileUrl());
+            response.setFileName(sub.getFileName());
+            response.setSubmittedAt(sub.getSubmittedAt() != null ?
+                sub.getSubmittedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : null);
         } else {
             response.setStatus(isOverdue ? "Overdue" : "Pending");
         }
+
+        // Include assignment creation date
+        response.setCreatedAt(assignment.getCreatedAt() != null ?
+            assignment.getCreatedAt().format(DATE_ONLY_FORMATTER) : null);
 
         return response;
     }

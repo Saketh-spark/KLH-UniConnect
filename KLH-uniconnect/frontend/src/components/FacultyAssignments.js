@@ -18,7 +18,7 @@ import {
   Star
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8085/api/assignments';
+const API_BASE = `${import.meta.env.VITE_API_BASE ?? 'http://localhost:8085'}/api/assignments`;
 
 const FacultyAssignments = ({ selectedSubject, setSelectedSubject, searchTerm }) => {
   const [assignments, setAssignments] = useState([]);

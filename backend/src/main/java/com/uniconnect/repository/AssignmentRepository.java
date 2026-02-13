@@ -12,4 +12,6 @@ public interface AssignmentRepository extends MongoRepository<Assignment, String
     List<Assignment> findBySubject(String subject);
     List<Assignment> findByDueDateBefore(LocalDateTime date);
     List<Assignment> findByDueDateAfter(LocalDateTime date);
+    List<Assignment> findByCreatedByOrderByCreatedAtDesc(String createdBy);
+    List<Assignment> findAllByOrderByCreatedAtDesc();
 }
