@@ -19,6 +19,11 @@ const StudentApplicationsTab = ({ studentId, email }) => {
 
   useEffect(() => {
     fetchData();
+    // Auto-refresh every 30 seconds to get real-time updates from faculty
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchData = async () => {
@@ -127,31 +132,47 @@ const StudentApplicationsTab = ({ studentId, email }) => {
         ))}
       </div>
 
-      {/* Upcoming Interviews / Tests Notification */}
-      {interviews.filter(i => i.status === 'Scheduled').length > 0 && (
-        <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
-          <h3 className="flex items-center gap-2 text-sm font-bold text-purple-800 mb-3">
-            <Bell size={16} /> Upcoming Interviews & Tests
-          </h3>
-          <div className="space-y-2">
-            {interviews.filter(i => i.status === 'Scheduled').map(intr => (
-              <div key={intr.id} className="flex items-center justify-between rounded-lg bg-white p-3 text-sm">
-                <div>
-                  <span className="font-semibold text-slate-800">{intr.company}</span>
-                  <span className="text-slate-500 ml-2">— {intr.round || 'Interview'}</span>
+      {/* Upcoming Interviews / Tests Notification — hide expired ones */}
+      {(() => {
+        const now = new Date();
+        const upcoming = interviews.filter(i => {
+          if (i.status !== 'Scheduled') return false;
+          // Parse date (YYYY-MM-DD) and time (HH:mm) to determine if expired
+          if (i.date) {
+            try {
+              const dateTimeStr = i.time ? `${i.date}T${i.time}` : `${i.date}T23:59`;
+              const interviewDt = new Date(dateTimeStr);
+              // Keep if interview is in the future (or within last hour for join grace)
+              return interviewDt.getTime() + 3600000 > now.getTime();
+            } catch { return true; }
+          }
+          return true;
+        });
+        return upcoming.length > 0 ? (
+          <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-purple-800 mb-3">
+              <Bell size={16} /> Upcoming Interviews & Tests
+            </h3>
+            <div className="space-y-2">
+              {upcoming.map(intr => (
+                <div key={intr.id} className="flex items-center justify-between rounded-lg bg-white p-3 text-sm">
+                  <div>
+                    <span className="font-semibold text-slate-800">{intr.company}</span>
+                    <span className="text-slate-500 ml-2">— {intr.round || 'Interview'}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-slate-500">
+                    <span className="flex items-center gap-1"><Calendar size={14} /> {intr.date}</span>
+                    {intr.time && <span>{intr.time}</span>}
+                    {intr.meetingLink && (
+                      <a href={intr.meetingLink} target="_blank" rel="noreferrer" className="text-sky-600 hover:text-sky-700 font-medium">Join</a>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 text-slate-500">
-                  <span className="flex items-center gap-1"><Calendar size={14} /> {intr.date}</span>
-                  {intr.time && <span>{intr.time}</span>}
-                  {intr.meetingLink && (
-                    <a href={intr.meetingLink} target="_blank" rel="noreferrer" className="text-sky-600 hover:text-sky-700 font-medium">Join</a>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        ) : null;
+      })()}
 
       {/* Application Cards */}
       {filtered.length === 0 ? (

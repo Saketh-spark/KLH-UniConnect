@@ -25,6 +25,11 @@ const FacultyApplicantTab = ({ email, onBack }) => {
 
   useEffect(() => {
     fetchData();
+    // Auto-refresh every 30 seconds 
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchData = async () => {
@@ -207,6 +212,39 @@ const FacultyApplicantTab = ({ email, onBack }) => {
                               }`}>{iv.status}</span>
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Student Documents */}
+                    {(app.resumeUrl || app.certificatesUrl || app.idProofUrl) && (
+                      <div className="mb-4">
+                        <h5 className="text-xs font-bold text-slate-600 mb-2">Student Documents</h5>
+                        <div className="flex flex-wrap gap-2">
+                          {app.resumeUrl && (
+                            <a href={app.resumeUrl?.startsWith('http') ? app.resumeUrl : `${API_BASE}${app.resumeUrl}`}
+                              target="_blank" rel="noreferrer"
+                              className="flex items-center gap-1.5 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 transition">
+                              <FileText size={14} /> Resume
+                              <Download size={12} />
+                            </a>
+                          )}
+                          {app.certificatesUrl && (
+                            <a href={app.certificatesUrl?.startsWith('http') ? app.certificatesUrl : `${API_BASE}${app.certificatesUrl}`}
+                              target="_blank" rel="noreferrer"
+                              className="flex items-center gap-1.5 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition">
+                              <Award size={14} /> Certificates
+                              <Download size={12} />
+                            </a>
+                          )}
+                          {app.idProofUrl && (
+                            <a href={app.idProofUrl?.startsWith('http') ? app.idProofUrl : `${API_BASE}${app.idProofUrl}`}
+                              target="_blank" rel="noreferrer"
+                              className="flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100 transition">
+                              <GraduationCap size={14} /> ID Proof
+                              <Download size={12} />
+                            </a>
+                          )}
                         </div>
                       </div>
                     )}
