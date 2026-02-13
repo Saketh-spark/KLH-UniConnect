@@ -12,8 +12,7 @@ import {
   AlertTriangle, ArrowUp, ArrowDown, Eye, Star, Loader
 } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8085';
-const API_BASE_URL = `${API_BASE}/api/analytics`;
+const API_BASE_URL = 'http://localhost:8085/api/analytics';
 
 export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack }) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -25,150 +24,53 @@ export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack 
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('monthly');
 
-  // Mock data for demonstration
-  const mockAnalytics = {
-    overallScore: 78,
-    gpa: 8.5,
-    gpaTrend: [
-      { month: 'Jan', gpa: 7.8, trend: 0 },
-      { month: 'Feb', gpa: 8.0, trend: 2.5 },
-      { month: 'Mar', gpa: 8.2, trend: 2.5 },
-      { month: 'Apr', gpa: 8.3, trend: 1.2 },
-      { month: 'May', gpa: 8.5, trend: 2.4 }
-    ],
-    placementReadinessScore: 82,
-    attendancePercentage: 92,
-    assignmentsCompleted: 34,
-    assignmentsPending: 6,
-    learningHours: {
-      academics: 45,
-      skills: 32,
-      placement: 20,
-      social: 15
-    },
-    subjectAttendance: [
-      { subject: 'DSA', attendance: 95, target: 90 },
-      { subject: 'Database', attendance: 88, target: 90 },
-      { subject: 'Web Dev', attendance: 92, target: 90 },
-      { subject: 'AI/ML', attendance: 85, target: 90 },
-      { subject: 'System Design', attendance: 90, target: 90 }
-    ],
-    monthlyPerformance: [
-      { week: 'W1', performance: 72, target: 75 },
-      { week: 'W2', performance: 74, target: 75 },
-      { week: 'W3', performance: 76, target: 75 },
-      { week: 'W4', performance: 78, target: 75 }
-    ],
-    insights: [
-      { icon: '📈', message: 'You improved GPA by 5% this month - Great progress!', type: 'positive' },
-      { icon: '🎯', message: 'Skill development is on track - Keep it up!', type: 'positive' },
-      { icon: '⚠️', message: 'Database attendance dropped to 88% - Attend more classes', type: 'warning' },
-      { icon: '🌟', message: 'You are among top 15% performers in your batch', type: 'positive' }
-    ]
+  const actualStudentId = studentId || localStorage.getItem('klhStudentId') || localStorage.getItem('studentId') || 'STU001';
+
+  // Fetch all analytics data from backend API
+  useEffect(() => {
+    fetchAllData();
+    const interval = setInterval(fetchAllData, 15000);
+    return () => clearInterval(interval);
+  }, [actualStudentId]);
+
+  const fetchAllData = async () => {
+    try {
+      const [analyticsRes, skillsRes, goalsRes, reportsRes, feedbackRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/student/${actualStudentId}`),
+        axios.get(`${API_BASE_URL}/skills/student/${actualStudentId}`),
+        axios.get(`${API_BASE_URL}/goals/student/${actualStudentId}`),
+        axios.get(`${API_BASE_URL}/reports/student/${actualStudentId}`),
+        axios.get(`${API_BASE_URL}/feedback/student/${actualStudentId}`)
+      ]);
+
+      setAnalytics(analyticsRes.data.analytics || analyticsRes.data || null);
+      setSkills(skillsRes.data.skills || skillsRes.data || []);
+      setGoals(goalsRes.data.goals || goalsRes.data || []);
+      setReports(reportsRes.data.reports || reportsRes.data || []);
+      setFeedback(feedbackRes.data.feedback || feedbackRes.data || []);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+      // Set empty defaults so UI doesn't break
+      if (!analytics) setAnalytics({ overallScore: 0, gpa: 0, gpaTrend: [], placementReadinessScore: 0, attendancePercentage: 0, assignmentsCompleted: 0, assignmentsPending: 0, learningHours: { academics: 0, skills: 0, placement: 0, social: 0 }, subjectAttendance: [], monthlyPerformance: [], insights: [] });
+      setLoading(false);
+    }
   };
 
-  const mockSkills = [
-    { id: 1, name: 'Data Structures', proficiency: 85, level: 'Advanced', endorsements: 12, category: 'Technical' },
-    { id: 2, name: 'React.js', proficiency: 78, level: 'Intermediate', endorsements: 8, category: 'Technical' },
-    { id: 3, name: 'Communication', proficiency: 82, level: 'Advanced', endorsements: 5, category: 'Soft Skills' },
-    { id: 4, name: 'Problem Solving', proficiency: 88, level: 'Expert', endorsements: 15, category: 'Technical' },
-    { id: 5, name: 'Leadership', proficiency: 72, level: 'Intermediate', endorsements: 4, category: 'Soft Skills' },
-    { id: 6, name: 'Python', proficiency: 92, level: 'Expert', endorsements: 18, category: 'Technical' }
-  ];
-
-  const mockGoals = [
-    {
-      id: 1,
-      title: 'Complete DSA Course',
-      description: 'Master all DSA concepts',
-      status: 'Active',
-      category: 'Academic',
-      priority: 'High',
-      progressPercentage: 75,
-      createdAt: '2025-11-01',
-      targetDate: '2026-02-01',
-      milestones: ['Arrays & Strings', 'Trees & Graphs', 'Dynamic Programming', 'Final Assessment'],
-      completedMilestones: 2,
-      feedback: 'You are doing well. Focus on graph problems.'
-    },
-    {
-      id: 2,
-      title: 'Build 3 Full-Stack Projects',
-      description: 'Create projects using MERN stack',
-      status: 'Active',
-      category: 'Skill',
-      priority: 'High',
-      progressPercentage: 50,
-      createdAt: '2025-10-15',
-      targetDate: '2026-03-15',
-      milestones: ['Project 1', 'Project 2', 'Project 3'],
-      completedMilestones: 1,
-      feedback: 'Great start on your first project.'
-    },
-    {
-      id: 3,
-      title: 'Improve Interview Skills',
-      description: 'Prepare for tech interviews',
-      status: 'Active',
-      category: 'Placement',
-      priority: 'Medium',
-      progressPercentage: 60,
-      createdAt: '2025-09-01',
-      targetDate: '2026-04-01',
-      milestones: ['Mock Interview 1', 'Mock Interview 2', 'Mock Interview 3'],
-      completedMilestones: 1,
-      feedback: 'Work on communication clarity.'
+  const handleDownloadReport = async (report) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/reports/${report.id}/download`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${report.type}-${report.month || 'report'}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      alert(`Report download not available yet.`);
     }
-  ];
-
-  const mockReports = [
-    {
-      id: 1,
-      type: 'Monthly Academic Report',
-      month: 'December 2025',
-      gpa: 8.5,
-      improvementScore: 5,
-      recommendations: 'Continue with current pace. Focus on improving Database attendance.',
-      fileUrl: '/reports/academic-dec-2025.pdf'
-    },
-    {
-      id: 2,
-      type: 'Skills Development Report',
-      month: 'December 2025',
-      topSkill: 'Python (92% proficiency)',
-      skillsImproved: 3,
-      recommendations: 'Great progress on technical skills. Invest more in soft skills development.',
-      fileUrl: '/reports/skills-dec-2025.pdf'
-    },
-    {
-      id: 3,
-      type: 'Placement Readiness Report',
-      month: 'December 2025',
-      readinessScore: 82,
-      recommendedActions: 'Complete 2 more projects, Attend 5 interviews',
-      fileUrl: '/reports/placement-dec-2025.pdf'
-    }
-  ];
-
-  const mockFeedback = [
-    { id: 1, faculty: 'Dr. Sharma', message: 'Excellent performance in the last assignment', date: '2025-12-20', type: 'positive' },
-    { id: 2, faculty: 'Prof. Singh', message: 'Work on algorithmic thinking', date: '2025-12-18', type: 'constructive' }
-  ];
-
-  useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setAnalytics(mockAnalytics);
-      setSkills(mockSkills);
-      setGoals(mockGoals);
-      setReports(mockReports);
-      setFeedback(mockFeedback);
-      setLoading(false);
-    }, 500);
-  }, [studentId]);
-
-  const handleDownloadReport = (report) => {
-    alert(`📥 Downloading: ${report.type} - ${report.month}`);
   };
 
   const getScoreColor = (score) => {
@@ -185,7 +87,9 @@ export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack 
     return 'bg-gradient-to-r from-red-400 to-red-600';
   };
 
-  const renderOverviewTab = () => (
+  const renderOverviewTab = () => {
+    if (!analytics) return <div className="text-center py-12 text-slate-500">No analytics data available yet.</div>;
+    return (
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -255,7 +159,7 @@ export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack 
           <h3 className="text-xl font-bold text-slate-900">AI-Generated Insights</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {analytics.insights.map((insight, idx) => (
+          {(analytics.insights || []).map((insight, idx) => (
             <div key={idx} className={`p-4 rounded-lg border-l-4 ${
               insight.type === 'positive'
                 ? 'bg-white border-l-green-500'
@@ -277,7 +181,7 @@ export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack 
           GPA Trend (Last 5 Months)
         </h3>
         <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={analytics.gpaTrend}>
+          <AreaChart data={analytics.gpaTrend || []}>
             <defs>
               <linearGradient id="colorGpa" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
@@ -316,7 +220,7 @@ export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack 
             Attendance by Subject
           </h3>
           <div className="space-y-3">
-            {analytics.subjectAttendance.map((subject, idx) => (
+            {(analytics.subjectAttendance || []).map((subject, idx) => (
               <div key={idx}>
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-semibold text-slate-700">{subject.subject}</span>
@@ -349,10 +253,10 @@ export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack 
             <PieChart>
               <Pie
                 data={[
-                  { name: 'Academics', value: analytics.learningHours.academics, fill: '#3B82F6' },
-                  { name: 'Skills', value: analytics.learningHours.skills, fill: '#8B5CF6' },
-                  { name: 'Placement', value: analytics.learningHours.placement, fill: '#F59E0B' },
-                  { name: 'Social', value: analytics.learningHours.social, fill: '#10B981' }
+                  { name: 'Academics', value: analytics.learningHours?.academics || 0, fill: '#3B82F6' },
+                  { name: 'Skills', value: analytics.learningHours?.skills || 0, fill: '#8B5CF6' },
+                  { name: 'Placement', value: analytics.learningHours?.placement || 0, fill: '#F59E0B' },
+                  { name: 'Social', value: analytics.learningHours?.social || 0, fill: '#10B981' }
                 ]}
                 cx="50%"
                 cy="50%"
@@ -378,7 +282,7 @@ export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack 
           Weekly Performance vs Target
         </h3>
         <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={analytics.monthlyPerformance}>
+          <ComposedChart data={analytics.monthlyPerformance || []}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="week" stroke="#94a3b8" />
             <YAxis stroke="#94a3b8" domain={[60, 85]} />
@@ -423,14 +327,17 @@ export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack 
       )}
     </div>
   );
+  };
 
-  const renderChartsTab = () => (
+  const renderChartsTab = () => {
+    if (!analytics) return <div className="text-center py-12 text-slate-500">No chart data available yet.</div>;
+    return (
     <div className="space-y-6">
       {/* Monthly Performance Chart */}
       <div className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg transition">
         <h3 className="text-lg font-bold text-slate-900 mb-4">Monthly Performance Trend</h3>
         <ResponsiveContainer width="100%" height={350}>
-          <LineChart data={analytics.gpaTrend}>
+          <LineChart data={analytics.gpaTrend || []}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="month" stroke="#94a3b8" />
             <YAxis stroke="#94a3b8" />
@@ -473,7 +380,7 @@ export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack 
       <div className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg transition">
         <h3 className="text-lg font-bold text-slate-900 mb-4">Subject Attendance Comparison</h3>
         <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={analytics.subjectAttendance}>
+          <BarChart data={analytics.subjectAttendance || []}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="subject" stroke="#94a3b8" />
             <YAxis stroke="#94a3b8" domain={[0, 100]} />
@@ -493,6 +400,7 @@ export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack 
       </div>
     </div>
   );
+  };
 
   const renderSkillsTab = () => (
     <div className="space-y-6">
@@ -583,7 +491,7 @@ export default function StudentAnalyticsEnhanced({ studentId = 'STU001', onBack 
                 <div>
                   <div className="flex justify-between mb-2">
                     <p className="text-sm font-semibold text-slate-600">Progress</p>
-                    <p className="text-sm font-bold text-slate-900">{goal.progressPercentage.toFixed(0)}%</p>
+                    <p className="text-sm font-bold text-slate-900">{(goal.progressPercentage || 0).toFixed(0)}%</p>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div

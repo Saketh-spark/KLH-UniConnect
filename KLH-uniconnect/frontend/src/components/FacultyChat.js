@@ -1,316 +1,235 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Send, Search, Phone, Info, MoreVertical, Paperclip, Smile, X } from 'lucide-react';
-import chatAPI from '../services/chatAPI.js';
-import socketService from '../services/socketService.js';
+
+const API_BASE = 'http://localhost:8085';
 
 const FacultyChat = ({ email = '', onBack = () => {} }) => {
-  const [chats, setChats] = useState([
-    {
-      id: 1,
-      type: 'individual',
-      participantName: 'Rahul Kumar',
-      participantEmail: 'rahul@student.com',
-      participantRole: 'Student',
-      participantId: 'RAK001',
-      avatar: 'RK',
-      lastMessage: 'Thank you for the assignment feedback',
-      timestamp: '2026-01-05 10:30',
-      unreadCount: 2,
-      onlineStatus: true
-    },
-    {
-      id: 2,
-      type: 'individual',
-      participantName: 'Priya Singh',
-      participantEmail: 'priya@student.com',
-      participantRole: 'Student',
-      participantId: 'PRS002',
-      avatar: 'PS',
-      lastMessage: 'Can we schedule office hours?',
-      timestamp: '2026-01-04 15:45',
-      unreadCount: 0,
-      onlineStatus: false
-    },
-    {
-      id: 3,
-      type: 'group',
-      participantName: 'CSE Batch 2024 - Class',
-      participants: 45,
-      avatar: 'CSE',
-      lastMessage: 'Dr. Sharma: Final project submission deadline extended',
-      timestamp: '2026-01-05 09:15',
-      unreadCount: 5,
-      onlineStatus: null
-    }
-  ]);
-
-  const [messages, setMessages] = useState({
-    1: [
-      { id: 1, senderId: email, content: 'Hi Rahul, I reviewed your assignment', type: 'text', status: 'seen', timestamp: '2026-01-05 10:15' },
-      { id: 2, senderId: 'rahul@student.com', content: 'Thank you! Can you share feedback?', type: 'text', status: 'seen', timestamp: '2026-01-05 10:20' },
-      { id: 3, senderId: email, content: 'Check your email for detailed feedback', type: 'text', status: 'seen', timestamp: '2026-01-05 10:25' },
-      { id: 4, senderId: 'rahul@student.com', content: 'Thank you for the assignment feedback', type: 'text', status: 'delivered', timestamp: '2026-01-05 10:30' }
-    ],
-    2: [
-      { id: 1, senderId: 'priya@student.com', content: 'Can we schedule office hours?', type: 'text', status: 'seen', timestamp: '2026-01-04 15:45' }
-    ],
-    3: [
-      { id: 1, senderId: 'dr-sharma@faculty.com', content: 'Final project submission deadline extended', type: 'text', status: 'seen', timestamp: '2026-01-05 09:15' }
-    ]
-  });
-
+  const [chats, setChats] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [messageInput, setMessageInput] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-  const [socketConnected, setSocketConnected] = useState(false);
+  const fileInputRef = useRef(null);
 
-  // Initialize Socket.IO connection and real-time listeners
+  const facultyId = email?.split('@')[0] || localStorage.getItem('klhFacultyId') || '';
+
+  // Load conversations and groups from backend
   useEffect(() => {
-    if (!email) return;
+    if (!facultyId) return;
+    loadConversations();
+    loadGroups();
+  }, [facultyId]);
 
-    // Connect to Socket.IO server with faculty email as userId
-    socketService.connect(email)
-      .then(() => {
-        console.log('Socket.IO connected for faculty:', email);
-        setSocketConnected(true);
-
-        // Set user as online
-        socketService.setOnlineStatus('online');
-
-        // Register listener for new messages
-        socketService.on('messageReceived', (data) => {
-          console.log('New message received:', data);
-          setMessages(prev => ({
-            ...prev,
-            [data.conversationId]: [...(prev[data.conversationId] || []), {
-              id: data.id,
-              senderId: data.senderId,
-              content: data.content,
-              type: data.type,
-              status: 'delivered',
-              timestamp: new Date(data.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            }]
-          }));
-          
-          // Auto-mark as seen if chat is open
-          if (selectedChat?.id === data.conversationId) {
-            socketService.markMessageAsSeen(data.id, data.senderId);
-          }
-        });
-
-        // Register listener for message delivery status
-        socketService.on('messageDelivered', (data) => {
-          console.log('Message delivered:', data);
-          setMessages(prev => ({
-            ...prev,
-            [selectedChat?.id]: (prev[selectedChat?.id] || []).map(msg =>
-              msg.id === data.messageId ? { ...msg, status: 'delivered' } : msg
-            )
-          }));
-        });
-
-        // Register listener for message seen status
-        socketService.on('messageSeen', (data) => {
-          console.log('Message seen by receiver:', data);
-          setMessages(prev => ({
-            ...prev,
-            [selectedChat?.id]: (prev[selectedChat?.id] || []).map(msg =>
-              msg.id === data.messageId ? { ...msg, status: 'seen' } : msg
-            )
-          }));
-        });
-
-        // Register listener for typing indicators
-        socketService.on('userTyping', (data) => {
-          console.log('User typing:', data);
-          if (data.isTyping) {
-            setIsTyping(true);
-          } else {
-            setIsTyping(false);
-          }
-        });
-
-        // Register listener for user status changes
-        socketService.on('userStatusChanged', (data) => {
-          console.log('User status changed:', data);
-          setChats(prev => prev.map(chat =>
-            chat.participantId === data.userId ? 
-            { ...chat, onlineStatus: data.isOnline } : chat
-          ));
-        });
-
-      })
-      .catch(error => {
-        console.error('Failed to connect Socket.IO:', error);
-        // Fallback to REST API mode
-      });
-
-    return () => {
-      // Cleanup on unmount
-      socketService.setOnlineStatus('offline');
-    };
-  }, [email]);
+  // Poll for new messages when a chat is selected
+  useEffect(() => {
+    if (!selectedChat) return;
+    loadMessages();
+    const interval = setInterval(loadMessages, 5000);
+    return () => clearInterval(interval);
+  }, [selectedChat]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [selectedChat, messages]);
+  }, [messages]);
 
   // Handle search with backend API
   useEffect(() => {
-    if (searchQuery.trim().length > 2) {
-      // Call backend API to search students
-      chatAPI.searchUsers(searchQuery, 'student')
-        .then(results => setSearchResults(results))
-        .catch(error => {
-          console.error('Search error:', error);
-          // Fallback to local search if API fails
-          const results = [
-            { id: 'STU001', name: 'Aman Kumar', email: 'aman@student.com', role: 'Student', avatar: 'AK' },
-            { id: 'STU002', name: 'Anjali Verma', email: 'anjali@student.com', role: 'Student', avatar: 'AV' },
-            { id: 'STU003', name: 'Aditya Singh', email: 'aditya@student.com', role: 'Student', avatar: 'AS' }
-          ].filter(user =>
-            user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.name.toLowerCase().includes(searchQuery.toLowerCase())
-          );
-          setSearchResults(results);
-        });
-    } else {
-      setSearchResults([]);
-    }
+    if (searchQuery.trim().length < 3) { setSearchResults([]); return; }
+    const searchUsers = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/chat/users/search?email=${encodeURIComponent(searchQuery)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setSearchResults(data.filter(u => u.id !== facultyId));
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+      }
+    };
+    searchUsers();
   }, [searchQuery]);
 
-  const handleSendMessage = async () => {
-    if (!messageInput.trim() || !selectedChat) return;
-
-    const newMessage = {
-      id: Date.now(),
-      senderId: email,
-      content: messageInput.trim(),
-      type: 'text',
-      status: 'sent',
-      timestamp: new Date().toLocaleString('en-IN', { 
-        year: 'numeric', month: '2-digit', day: '2-digit', 
-        hour: '2-digit', minute: '2-digit' 
-      })
-    };
-
-    // Add message to chat optimistically
-    setMessages({
-      ...messages,
-      [selectedChat]: [...(messages[selectedChat] || []), newMessage]
-    });
-
-    // Update chat list
-    setChats(chats.map(chat =>
-      chat.id === selectedChat
-        ? { ...chat, lastMessage: messageInput, timestamp: newMessage.timestamp, unreadCount: 0 }
-        : chat
-    ));
-
-    setMessageInput('');
-
-    // Send to backend via socket service
+  const loadConversations = async () => {
     try {
-      const receiverId = selectedChat.type === 'individual' ? selectedChat.participantId : null;
-      await socketService.sendMessage(
-        selectedChat.id.toString(),
-        receiverId,
-        messageInput.trim(),
-        'text'
-      );
+      const response = await fetch(`${API_BASE}/api/chat/conversations/${facultyId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setChats(prev => {
+          const groups = prev.filter(c => c.type === 'group');
+          const convos = data.map(c => ({
+            id: c.id,
+            type: 'individual',
+            participantName: c.otherUserName || c.otherUserEmail || 'User',
+            participantEmail: c.otherUserEmail || '',
+            participantId: c.otherUserId || '',
+            avatar: (c.otherUserName || 'U').substring(0, 2).toUpperCase(),
+            lastMessage: c.lastMessage || '',
+            timestamp: c.lastMessageTime || c.updatedAt || '',
+            unreadCount: c.unreadCount || 0,
+            onlineStatus: false
+          }));
+          return [...convos, ...groups];
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load conversations:', error);
+    }
+  };
+
+  const loadGroups = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/groups/user/${facultyId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setChats(prev => {
+          const individuals = prev.filter(c => c.type !== 'group');
+          const groups = data.map(g => ({
+            id: g.id,
+            type: 'group',
+            participantName: g.name || 'Group',
+            participants: g.memberCount || g.members?.length || 0,
+            avatar: (g.name || 'G').substring(0, 3).toUpperCase(),
+            lastMessage: g.lastMessage || '',
+            timestamp: g.lastMessageTime || g.updatedAt || '',
+            unreadCount: g.unreadCount || 0,
+            onlineStatus: null
+          }));
+          return [...individuals, ...groups];
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load groups:', error);
+    }
+  };
+
+  const loadMessages = async () => {
+    if (!selectedChat) return;
+    try {
+      const url = selectedChat.type === 'group'
+        ? `${API_BASE}/api/groups/${selectedChat.id}/messages`
+        : `${API_BASE}/api/chat/conversations/${selectedChat.id}/messages`;
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data);
+        // Mark messages as read
+        const readUrl = selectedChat.type === 'group'
+          ? `${API_BASE}/api/groups/${selectedChat.id}/read`
+          : `${API_BASE}/api/chat/conversations/${selectedChat.id}/read`;
+        await fetch(readUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: facultyId })
+        }).catch(() => {});
+      }
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() && !selectedFile) return;
+    if (!selectedChat) return;
+
+    try {
+      let fileUrl = null;
+      let fileName = null;
+      let fileSize = null;
+
+      // Upload file if selected
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        const uploadResponse = await fetch(`${API_BASE}/api/chat/upload`, { method: 'POST', body: formData });
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          fileUrl = uploadData.url;
+          fileName = uploadData.filename;
+          fileSize = parseInt(uploadData.size);
+        }
+      }
+
+      const messageData = {
+        senderId: facultyId,
+        content: messageInput.trim() || fileName || 'File',
+        type: selectedFile ? (selectedFile.type?.startsWith('image/') ? 'image' : 'file') : 'text',
+        fileUrl, fileName, fileSize
+      };
+
+      let response;
+      if (selectedChat.type === 'group') {
+        response = await fetch(`${API_BASE}/api/groups/${selectedChat.id}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(messageData)
+        });
+      } else {
+        response = await fetch(`${API_BASE}/api/chat/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...messageData, conversationId: selectedChat.id })
+        });
+      }
+
+      if (response.ok) {
+        setMessageInput('');
+        setSelectedFile(null);
+        await loadMessages();
+        await loadConversations();
+      }
     } catch (error) {
       console.error('Error sending message:', error);
     }
-
-    // Simulate message delivery and read receipt (socket will handle real updates)
-    setTimeout(() => {
-      setMessages(prev => ({
-        ...prev,
-        [selectedChat.id]: prev[selectedChat.id]?.map(msg =>
-          msg.id === newMessage.id ? { ...msg, status: 'delivered' } : msg
-        ) || []
-      }));
-    }, 500);
-
-    setTimeout(() => {
-      setMessages(prev => ({
-        ...prev,
-        [selectedChat.id]: prev[selectedChat.id]?.map(msg =>
-          msg.id === newMessage.id ? { ...msg, status: 'seen' } : msg
-        ) || []
-      }));
-    }, 1500);
   };
 
   const handleTyping = (value) => {
     setMessageInput(value);
-    
-    if (!isTyping) {
-      setIsTyping(true);
-      // Broadcast typing indicator
-    }
-
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    // Set new timeout to stop typing indicator
-    typingTimeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-    }, 1000);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => setIsTyping(false), 1000);
   };
 
-  const startNewChat = (user) => {
-    // Check if chat already exists
-    const existingChat = chats.find(
-      chat => chat.type === 'individual' && chat.participantEmail === user.email
-    );
-
-    if (existingChat) {
-      setSelectedChat(existingChat.id);
-    } else {
-      // Create new chat
-      const newChat = {
-        id: Math.max(...chats.map(c => c.id), 0) + 1,
-        type: 'individual',
-        participantName: user.name,
-        participantEmail: user.email,
-        participantRole: user.role,
-        participantId: user.id,
-        avatar: user.avatar,
-        lastMessage: '',
-        timestamp: '',
-        unreadCount: 0,
-        onlineStatus: true
-      };
-      setChats([newChat, ...chats]);
-      setMessages({ ...messages, [newChat.id]: [] });
-      setSelectedChat(newChat.id);
+  const startNewChat = async (user) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/chat/conversations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId1: facultyId, userId2: user.id })
+      });
+      if (response.ok) {
+        const conversation = await response.json();
+        setSelectedChat({
+          id: conversation.id,
+          type: 'individual',
+          participantName: conversation.otherUserName || user.name || user.email,
+          participantEmail: conversation.otherUserEmail || user.email,
+          avatar: (user.name || user.email || 'U').substring(0, 2).toUpperCase()
+        });
+        setShowSearch(false);
+        setSearchQuery('');
+        setSearchResults([]);
+        await loadConversations();
+        setTimeout(() => loadMessages(), 500);
+      }
+    } catch (error) {
+      console.error('Failed to start conversation:', error);
     }
-
-    setShowSearch(false);
-    setSearchQuery('');
-    setSearchResults([]);
   };
 
-  const deleteMessage = (messageId, deleteForAll = false) => {
+  const deleteMessage = async (messageId) => {
     if (!selectedChat) return;
-
-    setMessages({
-      ...messages,
-      [selectedChat]: messages[selectedChat].map(msg =>
-        msg.id === messageId
-          ? { ...msg, content: 'This message was deleted', type: 'deleted', status: deleteForAll ? 'deleted-everyone' : 'deleted-self' }
-          : msg
-      )
-    });
+    try {
+      await fetch(`${API_BASE}/api/chat/messages/${messageId}`, { method: 'DELETE' });
+      await loadMessages();
+    } catch (error) {
+      console.error('Error deleting message:', error);
+    }
   };
 
   const renderMessageStatus = (status) => {
@@ -320,14 +239,15 @@ const FacultyChat = ({ email = '', onBack = () => {} }) => {
       case 'delivered':
         return <span className="text-xs text-gray-400">✓✓</span>;
       case 'seen':
+      case 'read':
         return <span className="text-xs text-blue-500">✓✓</span>;
       default:
         return null;
     }
   };
 
-  const currentChat = selectedChat ? chats.find(c => c.id === selectedChat) : null;
-  const currentMessages = selectedChat ? messages[selectedChat] || [] : [];
+  const currentChat = selectedChat;
+  const currentMessages = messages;
 
   return (
     <div className="flex h-screen bg-slate-50">
@@ -398,12 +318,11 @@ const FacultyChat = ({ email = '', onBack = () => {} }) => {
             <button
               key={chat.id}
               onClick={() => {
-                setSelectedChat(chat.id);
-                // Mark as read
+                setSelectedChat(chat);
                 setChats(chats.map(c => c.id === chat.id ? { ...c, unreadCount: 0 } : c));
               }}
               className={`w-full border-b border-slate-100 p-3 text-left transition ${
-                selectedChat === chat.id ? 'bg-blue-50' : 'hover:bg-slate-50'
+                selectedChat?.id === chat.id ? 'bg-blue-50' : 'hover:bg-slate-50'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -417,8 +336,8 @@ const FacultyChat = ({ email = '', onBack = () => {} }) => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-900">{chat.participantName || chat.participantName}</h3>
-                    <p className="text-xs text-slate-500">{chat.timestamp.split(' ')[1]}</p>
+                    <h3 className="text-sm font-bold text-slate-900">{chat.participantName}</h3>
+                    <p className="text-xs text-slate-500">{chat.timestamp ? new Date(chat.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</p>
                   </div>
                   <p className="truncate text-xs text-slate-600">{chat.lastMessage}</p>
                 </div>
@@ -434,7 +353,7 @@ const FacultyChat = ({ email = '', onBack = () => {} }) => {
       </div>
 
       {/* Chat Window */}
-      {selectedChat && currentChat && (
+      {selectedChat && (
         <div className="flex flex-1 flex-col bg-white">
           {/* Chat Header */}
           <div className="border-b border-slate-200 bg-gradient-to-r from-slate-700 to-slate-800 p-4">
@@ -442,17 +361,17 @@ const FacultyChat = ({ email = '', onBack = () => {} }) => {
               <div className="flex items-center gap-3">
                 <button onClick={() => setSelectedChat(null)} className="md:hidden text-white">←</button>
                 <div>
-                  <h2 className="text-lg font-bold text-white">{currentChat.participantName}</h2>
-                  {currentChat.type === 'individual' && (
+                  <h2 className="text-lg font-bold text-white">{selectedChat.participantName}</h2>
+                  {selectedChat.type === 'individual' && (
                     <>
-                      <p className="text-xs text-slate-300">{currentChat.participantEmail}</p>
+                      <p className="text-xs text-slate-300">{selectedChat.participantEmail}</p>
                       <p className="text-xs text-slate-300">
-                        {currentChat.onlineStatus ? '🟢 Online' : '⚪ Offline'}
+                        {selectedChat.onlineStatus ? '🟢 Online' : '⚪ Offline'}
                       </p>
                     </>
                   )}
-                  {currentChat.type === 'group' && (
-                    <p className="text-xs text-slate-300">{currentChat.participants} members</p>
+                  {selectedChat.type === 'group' && (
+                    <p className="text-xs text-slate-300">{selectedChat.participants} members</p>
                   )}
                 </div>
               </div>
@@ -483,49 +402,51 @@ const FacultyChat = ({ email = '', onBack = () => {} }) => {
               currentMessages.map(msg => (
                 <div
                   key={msg.id}
-                  className={`flex gap-2 ${msg.senderId === email ? 'justify-end' : 'justify-start'}`}
+                  className={`flex gap-2 ${msg.senderId === facultyId ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
                     className={`group relative max-w-xs rounded-lg px-4 py-2 ${
-                      msg.senderId === email
+                      msg.senderId === facultyId
                         ? 'bg-blue-600 text-white'
                         : 'bg-slate-200 text-slate-900'
                     }`}
                   >
                     {msg.type === 'deleted' ? (
                       <p className="text-xs italic opacity-70">This message was deleted</p>
+                    ) : msg.type === 'image' ? (
+                      <img 
+                        src={msg.fileUrl?.startsWith('http') ? msg.fileUrl : `${API_BASE}${msg.fileUrl}`} 
+                        alt="shared" 
+                        className="max-w-full rounded cursor-pointer" 
+                        onClick={() => window.open(msg.fileUrl?.startsWith('http') ? msg.fileUrl : `${API_BASE}${msg.fileUrl}`, '_blank')}
+                      />
+                    ) : msg.type === 'file' ? (
+                      <a href={msg.fileUrl?.startsWith('http') ? msg.fileUrl : `${API_BASE}${msg.fileUrl}`} target="_blank" rel="noreferrer" className="underline text-sm">
+                        📎 {msg.fileName || msg.content}
+                      </a>
                     ) : (
                       <p className="text-sm">{msg.content}</p>
                     )}
                     <div className={`flex items-center justify-between gap-1 mt-1 text-xs ${
-                      msg.senderId === email ? 'text-blue-100' : 'text-slate-600'
+                      msg.senderId === facultyId ? 'text-blue-100' : 'text-slate-600'
                     }`}>
-                      <span>{msg.timestamp.split(' ')[1]}</span>
-                      {msg.senderId === email && renderMessageStatus(msg.status)}
+                      <span>{msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                      {msg.senderId === facultyId && renderMessageStatus(msg.status)}
                     </div>
 
                     {/* Message Actions */}
                     {msg.type !== 'deleted' && (
                       <div className={`absolute bottom-full right-0 mb-2 hidden gap-1 rounded-lg ${
-                        msg.senderId === email ? 'bg-slate-800' : 'bg-slate-700'
+                        msg.senderId === facultyId ? 'bg-slate-800' : 'bg-slate-700'
                       } p-1 group-hover:flex`}>
-                        {msg.senderId === email && (
-                          <>
-                            <button
-                              onClick={() => deleteMessage(msg.id, false)}
-                              className="rounded px-2 py-1 text-xs text-slate-300 hover:bg-slate-600"
-                              title="Delete for me"
-                            >
-                              Delete
-                            </button>
-                            <button
-                              onClick={() => deleteMessage(msg.id, true)}
-                              className="rounded px-2 py-1 text-xs text-slate-300 hover:bg-slate-600"
-                              title="Delete for all"
-                            >
-                              Delete All
-                            </button>
-                          </>
+                        {msg.senderId === facultyId && (
+                          <button
+                            onClick={() => deleteMessage(msg.id)}
+                            className="rounded px-2 py-1 text-xs text-slate-300 hover:bg-slate-600"
+                            title="Delete"
+                          >
+                            Delete
+                          </button>
                         )}
                       </div>
                     )}
