@@ -141,7 +141,7 @@ public class ExamService {
         allExams.addAll(examRepository.findByEnrolledStudentsIdsContaining(studentId));
 
         // 2. Search by the student's email (faculty enrolls by email)
-        studentRepository.findById(studentId).ifPresent(student -> {
+        resolveStudent(studentId).ifPresent(student -> {
             allExams.addAll(examRepository.findByEnrolledStudentsIdsContaining(student.getEmail()));
         });
 
@@ -279,6 +279,30 @@ public class ExamService {
         questionRepository.deleteById(questionId);
     }
 
+    // ============ STUDENT RESOLUTION HELPER ============
+
+    /**
+     * Resolve a student from any identifier: MongoDB ObjectId, full email, or email prefix.
+     * The auth system returns email prefix (e.g. "2410080030") as studentId,
+     * so we must handle all three lookup strategies.
+     */
+    private Optional<Student> resolveStudent(String identifier) {
+        // 1. Try as MongoDB ObjectId
+        Optional<Student> student = studentRepository.findById(identifier);
+        if (student.isPresent()) return student;
+
+        // 2. Try as full email
+        student = studentRepository.findByEmail(identifier);
+        if (student.isPresent()) return student;
+
+        // 3. Try as email prefix (e.g. "2410080030" → matches "2410080030@klh.edu.in")
+        List<Student> matches = studentRepository.findByEmailContainingIgnoreCase(identifier);
+        return matches.stream()
+                .filter(s -> s.getEmail() != null &&
+                        s.getEmail().toLowerCase().startsWith(identifier.toLowerCase() + "@"))
+                .findFirst();
+    }
+
     // ============ EXAM ATTEMPT (STUDENT) ============
 
     public ExamAttempt startExam(String examId, String studentId) {
@@ -301,11 +325,15 @@ public class ExamService {
             examRepository.save(exam);
         }
 
-        Student student = studentRepository.findById(studentId)
+        // Resolve student from any identifier (ObjectId, email, or email prefix)
+        Student student = resolveStudent(studentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
 
-        // Check if student already has an ongoing attempt
+        // Check if student already has an ongoing attempt (check both raw ID and resolved ID)
         Optional<ExamAttempt> existing = attemptRepository.findByExamIdAndStudentId(examId, studentId);
+        if (!existing.isPresent()) {
+            existing = attemptRepository.findByExamIdAndStudentId(examId, student.getId());
+        }
         if (existing.isPresent() && existing.get().getStatus().equals("ONGOING")) {
             return existing.get();
         }
