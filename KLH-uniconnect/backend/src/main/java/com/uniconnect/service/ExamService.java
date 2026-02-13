@@ -489,6 +489,63 @@ public class ExamService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attempt not found"));
     }
 
+    // ============ STUDENT SEARCH & SCHEDULE FOR ALL ============
+
+    public List<Map<String, String>> getAllStudentsForExam() {
+        List<Student> students = studentRepository.findAll();
+        return students.stream()
+            .map(this::mapStudentToInfo)
+            .sorted(Comparator.comparing(m -> m.getOrDefault("rollNumber", "")))
+            .collect(Collectors.toList());
+    }
+
+    public List<Map<String, String>> searchStudents(String query) {
+        if (query == null || query.isBlank()) {
+            return getAllStudentsForExam();
+        }
+        String q = query.toLowerCase().trim();
+        List<Student> students = studentRepository.findAll();
+        return students.stream()
+            .filter(s -> {
+                String name = s.getName() != null ? s.getName().toLowerCase() : "";
+                String email = s.getEmail() != null ? s.getEmail().toLowerCase() : "";
+                String roll = s.getRollNumber() != null ? s.getRollNumber().toLowerCase() : "";
+                String branch = s.getBranch() != null ? s.getBranch().toLowerCase() : "";
+                String section = s.getSection() != null ? s.getSection().toLowerCase() : "";
+                String year = s.getYear() != null ? s.getYear().toLowerCase() : "";
+                return name.contains(q) || email.contains(q) || roll.contains(q)
+                    || branch.contains(q) || section.contains(q) || year.contains(q);
+            })
+            .map(this::mapStudentToInfo)
+            .sorted(Comparator.comparing(m -> m.getOrDefault("rollNumber", "")))
+            .collect(Collectors.toList());
+    }
+
+    public ExamResponse scheduleExamForAll(String examId, String facultyId,
+                                            String startTimeStr, String endTimeStr) {
+        List<Student> allStudents = studentRepository.findAll();
+        List<String> allEmails = allStudents.stream()
+            .map(Student::getEmail)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+        return scheduleExam(examId, facultyId, allEmails, startTimeStr, endTimeStr);
+    }
+
+    private Map<String, String> mapStudentToInfo(Student s) {
+        Map<String, String> info = new HashMap<>();
+        String emailPrefix = (s.getEmail() != null && s.getEmail().contains("@"))
+                ? s.getEmail().split("@")[0] : s.getId();
+        info.put("id", s.getId());
+        info.put("email", s.getEmail() != null ? s.getEmail() : "");
+        info.put("name", s.getName() != null ? s.getName() : emailPrefix);
+        info.put("rollNumber", s.getRollNumber() != null && !s.getRollNumber().isEmpty()
+                ? s.getRollNumber() : emailPrefix);
+        info.put("branch", s.getBranch() != null ? s.getBranch() : "");
+        info.put("year", s.getYear() != null ? s.getYear() : "");
+        info.put("section", s.getSection() != null ? s.getSection() : "");
+        return info;
+    }
+
     // ============ HELPER METHODS ============
 
     private ExamResponse mapToResponse(Exam exam) {

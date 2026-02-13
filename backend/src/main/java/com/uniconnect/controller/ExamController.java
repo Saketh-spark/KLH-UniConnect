@@ -48,12 +48,34 @@ public class ExamController {
             @PathVariable String examId,
             @RequestHeader("X-Faculty-Id") String facultyId,
             @RequestBody Map<String, Object> body) {
-        @SuppressWarnings("unchecked")
-        List<String> studentIds = (List<String>) body.get("studentEmails");
+        Boolean assignAll = (Boolean) body.getOrDefault("assignAll", false);
         String startTime = (String) body.get("startTime");
         String endTime = (String) body.get("endTime");
-        ExamResponse response = examService.scheduleExam(examId, facultyId, studentIds, startTime, endTime);
+
+        ExamResponse response;
+        if (Boolean.TRUE.equals(assignAll)) {
+            response = examService.scheduleExamForAll(examId, facultyId, startTime, endTime);
+        } else {
+            @SuppressWarnings("unchecked")
+            List<String> studentIds = (List<String>) body.get("studentEmails");
+            response = examService.scheduleExam(examId, facultyId, studentIds, startTime, endTime);
+        }
         return ResponseEntity.ok(response);
+    }
+
+    // ============ STUDENT SEARCH FOR EXAM SCHEDULING ============
+
+    @GetMapping("/students/all")
+    public ResponseEntity<List<Map<String, String>>> getAllStudentsForExam() {
+        List<Map<String, String>> students = examService.getAllStudentsForExam();
+        return ResponseEntity.ok(students);
+    }
+
+    @GetMapping("/students/search")
+    public ResponseEntity<List<Map<String, String>>> searchStudentsForExam(
+            @RequestParam(value = "q", defaultValue = "") String query) {
+        List<Map<String, String>> students = examService.searchStudents(query);
+        return ResponseEntity.ok(students);
     }
 
     @GetMapping("/faculty")
