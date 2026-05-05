@@ -11,6 +11,7 @@ import com.uniconnect.model.Student;
 import com.uniconnect.repository.ChatGroupRepository;
 import com.uniconnect.repository.ConversationRepository;
 import com.uniconnect.repository.FacultyRepository;
+import com.uniconnect.repository.FollowRequestRepository;
 import com.uniconnect.repository.MessageRepository;
 import com.uniconnect.repository.StudentRepository;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class ChatService {
     private final ChatGroupRepository chatGroupRepository;
     private final StudentRepository studentRepository;
     private final FacultyRepository facultyRepository;
+    private final FollowRequestRepository followRequestRepository;
     private static final String CHAT_UPLOAD_DIR = new File("uploads/chat").getAbsolutePath();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
 
@@ -38,12 +40,14 @@ public class ChatService {
                       ConversationRepository conversationRepository,
                       ChatGroupRepository chatGroupRepository,
                       StudentRepository studentRepository,
-                      FacultyRepository facultyRepository) {
+                      FacultyRepository facultyRepository,
+                      FollowRequestRepository followRequestRepository) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.chatGroupRepository = chatGroupRepository;
         this.studentRepository = studentRepository;
         this.facultyRepository = facultyRepository;
+        this.followRequestRepository = followRequestRepository;
         
         // Create chat upload directory
         File uploadDir = new File(CHAT_UPLOAD_DIR);
@@ -51,6 +55,15 @@ public class ChatService {
             uploadDir.mkdirs();
             System.out.println("Created chat upload directory: " + CHAT_UPLOAD_DIR);
         }
+    }
+
+    // User Search - searches both students and faculty
+    public boolean areMutuallyFollowing(String email1, String email2) {
+        // Check if there's an ACCEPTED follow in either direction
+        boolean forward = !followRequestRepository.findByFromEmailAndToEmailAndStatus(email1, email2, "ACCEPTED").isEmpty();
+        if (forward) return true;
+        boolean reverse = !followRequestRepository.findByFromEmailAndToEmailAndStatus(email2, email1, "ACCEPTED").isEmpty();
+        return reverse;
     }
 
     // User Search - searches both students and faculty

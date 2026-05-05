@@ -20,47 +20,83 @@ const SUBJECTS = [
 
 const TIMETABLE = {
   Monday: [
-    { subject: 'FSAD',   type: 'Lab',       time: '10:10 AM – 11:50 AM',  period: 'Mon P1-P2' },
-    { subject: 'FAIEDC', type: 'Lab',       time: '11:50 AM – 12:45 PM',  period: 'Mon P3' },
-    { subject: 'CIS',    type: 'Lab',       time: '1:30 PM – 2:20 PM',    period: 'Mon P4' },
-    { subject: 'ML',     type: 'Practical', time: '2:20 PM – 4:00 PM',    period: 'Mon P5-P6' },
+    { subject: 'MO',     type: 'Theory',           time: '8:15 AM – 9:05 AM',   period: 'Mon P1' },
+    { subject: 'MO',     type: 'Theory',           time: '9:05 AM – 9:55 AM',   period: 'Mon P2' },
+    { subject: 'FSAD',   type: 'Theory',           time: '10:10 AM – 11:00 AM', period: 'Mon P3' },
+    { subject: 'FSAD',   type: 'Theory',           time: '11:00 AM – 11:50 AM', period: 'Mon P4' },
+    { subject: 'FAIEDC', type: 'Theory',           time: '11:50 AM – 12:45 PM', period: 'Mon P5' },
+    { subject: 'CIS',    type: 'Theory',           time: '1:30 PM – 2:20 PM',   period: 'Mon P6' },
+    { subject: 'ML',     type: 'Lab',              time: '2:20 PM – 3:10 PM',   period: 'Mon P7' },
+    { subject: 'ML',     type: 'Lab',              time: '3:10 PM – 4:00 PM',   period: 'Mon P8' },
   ],
   Tuesday: [
-    { subject: 'FSAD',   type: 'Theory',   time: '10:10 AM – 11:00 AM',  period: 'Tue P1' },
-    { subject: 'FAIEDC', type: 'Lab',       time: '11:00 AM – 12:45 PM',  period: 'Tue P2-P3' },
-    { subject: 'CIS',    type: 'Lab',       time: '1:30 PM – 3:10 PM',    period: 'Tue P4-P5' },
+    { subject: 'DAA',    type: 'Theory',           time: '8:15 AM – 9:05 AM',   period: 'Tue P1' },
+    { subject: 'DAA',    type: 'Theory',           time: '9:05 AM – 9:55 AM',   period: 'Tue P2' },
+    { subject: 'FSAD',   type: 'Theory',           time: '10:10 AM – 11:00 AM', period: 'Tue P3' },
+    { subject: 'FSAD',   type: 'Theory',           time: '11:00 AM – 11:50 AM', period: 'Tue P4' },
+    { subject: 'FAIEDC', type: 'Theory',           time: '11:50 AM – 12:45 PM', period: 'Tue P5' },
+    { subject: 'CIS',    type: 'Theory',           time: '1:30 PM – 2:20 PM',   period: 'Tue P6' },
+    { subject: 'CIS',    type: 'Theory',           time: '2:20 PM – 3:10 PM',   period: 'Tue P7' },
+    { subject: 'Sports', type: 'Sports',           time: '3:10 PM – 4:00 PM',   period: 'Tue P8' },
   ],
   Wednesday: [
-    { subject: 'CN',     type: 'Lab',       time: '10:10 AM – 11:00 AM',  period: 'Wed P1' },
-    { subject: 'FAIEDC', type: 'Practical', time: '11:00 AM – 12:45 PM',  period: 'Wed P2-P3' },
-    { subject: 'ML',     type: 'Lab',       time: '1:30 PM – 2:20 PM',    period: 'Wed P4' },
+    { subject: 'DAA',    type: 'Lab',              time: '8:15 AM – 9:05 AM',   period: 'Wed P1' },
+    { subject: 'DAA',    type: 'Lab',              time: '9:05 AM – 9:55 AM',   period: 'Wed P2' },
+    { subject: 'CN',     type: 'Theory',           time: '10:10 AM – 11:00 AM', period: 'Wed P3' },
+    { subject: 'FAIEDC', type: 'Lab',              time: '11:00 AM – 11:50 AM', period: 'Wed P4' },
+    { subject: 'FAIEDC', type: 'Lab',              time: '11:50 AM – 12:45 PM', period: 'Wed P5' },
+    { subject: 'ML',     type: 'Theory',           time: '1:30 PM – 2:20 PM',   period: 'Wed P6' },
+    { subject: 'Coding', type: 'Coding Practice',  time: '2:20 PM – 3:10 PM',   period: 'Wed P7' },
+    { subject: 'Coding', type: 'Coding Practice',  time: '3:10 PM – 4:00 PM',   period: 'Wed P8' },
   ],
   Thursday: [
-    { subject: 'CN',     type: 'Lab',       time: '1:30 PM – 2:20 PM',    period: 'Thu P4' },
+    { subject: 'CRT',    type: 'CRT',              time: '10:10 AM – 11:00 AM', period: 'Thu P3' },
+    { subject: 'CRT',    type: 'CRT',              time: '11:00 AM – 11:50 AM', period: 'Thu P4' },
+    { subject: 'DAA',    type: 'Theory',           time: '11:50 AM – 12:45 PM', period: 'Thu P5' },
+    { subject: 'CN',     type: 'Theory',           time: '1:30 PM – 2:20 PM',   period: 'Thu P6' },
+    { subject: 'DA',     type: 'DA/Mentor-Mentee', time: '2:20 PM – 4:00 PM',   period: 'Thu P7-P8' },
   ],
   Friday: [
-    { subject: 'CIS',    type: 'Theory',   time: '10:10 AM – 11:00 AM',  period: 'Fri P1' },
-    { subject: 'DAA',    type: 'Theory',   time: '11:00 AM – 11:50 AM',  period: 'Fri P2' },
-    { subject: 'DAA',    type: 'Practical', time: '11:50 AM – 12:45 PM',  period: 'Fri P3' },
-    { subject: 'CN',     type: 'Lab',       time: '1:30 PM – 2:20 PM',    period: 'Fri P4' },
+    { subject: 'MO',     type: 'Tutorial',         time: '8:15 AM – 9:05 AM',   period: 'Fri P1' },
+    { subject: 'MO',     type: 'Tutorial',         time: '9:05 AM – 9:55 AM',   period: 'Fri P2' },
+    { subject: 'CIS',    type: 'Theory',           time: '10:10 AM – 11:00 AM', period: 'Fri P3' },
+    { subject: 'DAA',    type: 'Theory',           time: '11:00 AM – 11:50 AM', period: 'Fri P4' },
+    { subject: 'DAA',    type: 'Theory',           time: '11:50 AM – 12:45 PM', period: 'Fri P5' },
+    { subject: 'CN',     type: 'Theory',           time: '1:30 PM – 2:20 PM',   period: 'Fri P6' },
+    { subject: 'CN',     type: 'Theory',           time: '2:20 PM – 3:10 PM',   period: 'Fri P7' },
   ],
   Saturday: [
-    { subject: 'ML',     type: 'Lab',       time: '8:15 AM – 9:55 AM',    period: 'Sat P1-P2' },
-    { subject: 'CIS',    type: 'Practical', time: '10:10 AM – 11:00 AM',  period: 'Sat P3' },
-    { subject: 'CN',     type: 'Practical', time: '1:30 PM – 3:10 PM',    period: 'Sat P4-P5' },
+    { subject: 'ML',     type: 'Theory',           time: '8:15 AM – 9:05 AM',   period: 'Sat P1' },
+    { subject: 'ML',     type: 'Theory',           time: '9:05 AM – 9:55 AM',   period: 'Sat P2' },
+    { subject: 'CIS',    type: 'Lab',              time: '10:10 AM – 11:00 AM', period: 'Sat P3' },
+    { subject: 'CIS',    type: 'Lab',              time: '11:00 AM – 11:50 AM', period: 'Sat P4' },
+    { subject: 'DAA',    type: 'Theory',           time: '11:50 AM – 12:45 PM', period: 'Sat P5' },
+    { subject: 'CN',     type: 'Lab',              time: '1:30 PM – 2:20 PM',   period: 'Sat P6' },
+    { subject: 'CN',     type: 'Lab',              time: '2:20 PM – 3:10 PM',   period: 'Sat P7' },
+    { subject: 'Sports', type: 'Sports',           time: '3:10 PM – 4:00 PM',   period: 'Sat P8' },
   ],
 };
 
 const DAYS_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const typeBadge = (type) => {
-  const m = { Theory: 'bg-blue-100 text-blue-700', Lab: 'bg-purple-100 text-purple-700', Practical: 'bg-amber-100 text-amber-700' };
+  const m = {
+    Theory: 'bg-blue-100 text-blue-700', Lab: 'bg-purple-100 text-purple-700',
+    Practical: 'bg-amber-100 text-amber-700', Tutorial: 'bg-cyan-100 text-cyan-700',
+    Sports: 'bg-green-100 text-green-700', CRT: 'bg-orange-100 text-orange-700',
+    'Coding Practice': 'bg-teal-100 text-teal-700', 'DA/Mentor-Mentee': 'bg-pink-100 text-pink-700',
+  };
   return <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${m[type] || 'bg-slate-100 text-slate-600'}`}>{type}</span>;
 };
 
 const typeIcon = (type) => {
   if (type === 'Lab') return <FlaskConical size={14} className="text-purple-500" />;
   if (type === 'Practical') return <BookMarked size={14} className="text-amber-500" />;
+  if (type === 'Tutorial') return <BookOpen size={14} className="text-cyan-500" />;
+  if (type === 'Sports') return <Users size={14} className="text-green-500" />;
+  if (type === 'CRT') return <Clock size={14} className="text-orange-500" />;
+  if (type === 'Coding Practice') return <BookMarked size={14} className="text-teal-500" />;
+  if (type === 'DA/Mentor-Mentee') return <Users size={14} className="text-pink-500" />;
   return <BookOpen size={14} className="text-blue-500" />;
 };
 
@@ -90,6 +126,10 @@ const FacultyAttendance = ({ selectedSubject, setSelectedSubject, searchTerm }) 
   // Filter & expand
   const [filterSubject, setFilterSubject] = useState('all');
   const [expandedDay, setExpandedDay] = useState(null);
+
+  // Low attendance controls
+  const [lowAttThreshold, setLowAttThreshold] = useState(75);
+  const [lowAttFilterSubject, setLowAttFilterSubject] = useState('all');
 
   /* ═══ Fetch ═══ */
   const fetchAllStudents = useCallback(async () => {
@@ -245,7 +285,37 @@ const FacultyAttendance = ({ selectedSubject, setSelectedSubject, searchTerm }) 
     return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d.getDay()];
   }, []);
 
-  const todaySessions = TIMETABLE[todayDay] || [];
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+
+  const todaySessions = useMemo(() => {
+    const all = TIMETABLE[todayDay] || [];
+    // Filter out sessions already marked today
+    return all.filter(slot => {
+      const sub = SUBJECTS.find(s => s.code === slot.subject);
+      return !attendanceRecords.some(r =>
+        r.date === todayStr &&
+        (r.subjectCode === slot.subject || r.subject === sub?.name) &&
+        r.period && r.period.includes(slot.period)
+      );
+    });
+  }, [todayDay, todayStr, attendanceRecords]);
+
+  // Filtered low-attendance students
+  const filteredLowAttStudents = useMemo(() => {
+    return lowAttendanceStudents.filter(s => {
+      const pct = s.overallPercentage ?? s.percentage ?? 0;
+      if (pct >= lowAttThreshold) return false;
+      if (lowAttFilterSubject !== 'all') {
+        // If per-subject data exists, check that subject specifically
+        if (s.subjectCode && s.subjectCode !== lowAttFilterSubject) return false;
+        if (s.subject) {
+          const sub = SUBJECTS.find(x => x.code === lowAttFilterSubject);
+          if (sub && s.subject !== sub.name && s.subject !== lowAttFilterSubject) return false;
+        }
+      }
+      return true;
+    });
+  }, [lowAttendanceStudents, lowAttThreshold, lowAttFilterSubject]);
 
   /* ═══ Loading ═══ */
   if (loading) {
@@ -276,30 +346,40 @@ const FacultyAttendance = ({ selectedSubject, setSelectedSubject, searchTerm }) 
       </div>
 
       {/* ══ Today's Sessions ══ */}
-      {todaySessions.length > 0 && (
+      {todayDay !== 'Sunday' && (
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
           <h3 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
             <Clock size={16} /> Today's Sessions ({todayDay})
+            {todaySessions.length === 0 && (
+              <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">All Done!</span>
+            )}
           </h3>
-          <div className="space-y-2">
-            {todaySessions.map((slot, i) => {
-              const sub = SUBJECTS.find(s => s.code === slot.subject);
-              return (
-                <div key={i} className="flex items-center gap-3 rounded-lg bg-white border border-blue-100 p-3 shadow-sm">
-                  {typeIcon(slot.type)}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800">{sub?.name || slot.subject}</p>
-                    <p className="text-[10px] text-slate-500">{slot.time}</p>
+          {todaySessions.length > 0 ? (
+            <div className="space-y-2">
+              {todaySessions.map((slot, i) => {
+                const sub = SUBJECTS.find(s => s.code === slot.subject);
+                return (
+                  <div key={i} className="flex items-center gap-3 rounded-lg bg-white border border-blue-100 p-3 shadow-sm">
+                    {typeIcon(slot.type)}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-800">{sub?.name || slot.subject}</p>
+                      <p className="text-[10px] text-slate-500">{slot.time} · {slot.period}</p>
+                    </div>
+                    {typeBadge(slot.type)}
+                    <button onClick={() => openMarkAttendance(slot.subject, slot.type, slot.period)}
+                      className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-blue-700 transition">
+                      <Plus size={12} /> Mark
+                    </button>
                   </div>
-                  {typeBadge(slot.type)}
-                  <button onClick={() => openMarkAttendance(slot.subject, slot.type, slot.period)}
-                    className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-blue-700 transition">
-                    <Plus size={12} /> Mark
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+              <CheckCircle size={16} className="text-emerald-600" />
+              <p className="text-xs text-emerald-700 font-semibold">All sessions for today have been marked!</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -437,18 +517,44 @@ const FacultyAttendance = ({ selectedSubject, setSelectedSubject, searchTerm }) 
       {/* ══ Low Attendance Students ══ */}
       {lowAttendanceStudents.length > 0 && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-5">
-          <h3 className="text-sm font-bold text-red-900 mb-3 flex items-center gap-2">
-            <AlertCircle size={16} /> Low Attendance Students ({lowAttendanceStudents.length})
-          </h3>
-          <div className="space-y-1 max-h-48 overflow-y-auto">
-            {lowAttendanceStudents.map((s, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-lg bg-white border border-red-100 p-2.5">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">{i + 1}</span>
-                <span className="flex-1 text-xs text-slate-700 truncate">{s.studentName || s.studentId}</span>
-                <span className="text-xs font-bold text-red-600">{s.overallPercentage?.toFixed?.(1) ?? s.percentage ?? 0}%</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <h3 className="text-sm font-bold text-red-900 flex items-center gap-2">
+              <AlertCircle size={16} /> Low Attendance Students ({filteredLowAttStudents.length})
+            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <label className="text-[10px] font-semibold text-red-800">Below</label>
+                <select value={lowAttThreshold} onChange={e => setLowAttThreshold(Number(e.target.value))}
+                  className="rounded-lg border border-red-200 bg-white px-2 py-1 text-[10px] font-bold text-red-700 outline-none focus:border-red-400">
+                  {[50, 60, 65, 70, 75, 80, 85, 90].map(v => (
+                    <option key={v} value={v}>{v}%</option>
+                  ))}
+                </select>
               </div>
-            ))}
+              <select value={lowAttFilterSubject} onChange={e => setLowAttFilterSubject(e.target.value)}
+                className="rounded-lg border border-red-200 bg-white px-2 py-1 text-[10px] font-bold text-red-700 outline-none focus:border-red-400">
+                <option value="all">All Subjects</option>
+                {SUBJECTS.map(s => <option key={s.code} value={s.code}>{s.short}</option>)}
+              </select>
+            </div>
           </div>
+          {filteredLowAttStudents.length > 0 ? (
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {filteredLowAttStudents.map((s, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-lg bg-white border border-red-100 p-2.5">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">{i + 1}</span>
+                  <span className="flex-1 text-xs text-slate-700 truncate">{s.studentName || s.studentId}</span>
+                  {s.subject && <span className="text-[10px] font-semibold text-slate-500">{s.subjectCode || s.subject}</span>}
+                  <span className="text-xs font-bold text-red-600">{s.overallPercentage?.toFixed?.(1) ?? s.percentage ?? 0}%</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 rounded-lg bg-white border border-red-100 p-3">
+              <CheckCircle size={14} className="text-emerald-500" />
+              <p className="text-xs text-slate-600">No students below {lowAttThreshold}% threshold{lowAttFilterSubject !== 'all' ? ` for ${lowAttFilterSubject}` : ''}</p>
+            </div>
+          )}
         </div>
       )}
 

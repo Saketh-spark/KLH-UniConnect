@@ -31,9 +31,12 @@ public class AttendanceService {
         return students.stream()
             .map(s -> {
                 Map<String, String> studentInfo = new HashMap<>();
-                studentInfo.put("studentId", s.getId());
+                // Use email prefix as studentId to match the student portal login identity
+                String emailPrefix = (s.getEmail() != null && s.getEmail().contains("@"))
+                        ? s.getEmail().split("@")[0] : s.getId();
+                studentInfo.put("studentId", emailPrefix);
                 studentInfo.put("studentName", s.getName() != null ? s.getName() : "Unknown");
-                studentInfo.put("rollNumber", s.getRollNumber() != null ? s.getRollNumber() : s.getId());
+                studentInfo.put("rollNumber", s.getRollNumber() != null ? s.getRollNumber() : emailPrefix);
                 studentInfo.put("email", s.getEmail());
                 studentInfo.put("branch", s.getBranch() != null ? s.getBranch() : "");
                 studentInfo.put("year", s.getYear() != null ? s.getYear() : "");
@@ -163,14 +166,18 @@ public class AttendanceService {
             String subject = entry.getKey();
             List<AttendanceRecord> subjectRecords = entry.getValue();
 
-            int totalClasses = subjectRecords.size();
+            int totalClasses = 0;
             int attended = 0;
 
             for (AttendanceRecord record : subjectRecords) {
                 for (AttendanceRecord.StudentAttendance sa : record.getStudents()) {
-                    if (sa.getStudentId().equals(studentId) && 
-                        ("PRESENT".equals(sa.getStatus()) || "LATE".equals(sa.getStatus()))) {
-                        attended++;
+                    // Match by studentId to handle both old and new records
+                    boolean idMatch = sa.getStudentId() != null && sa.getStudentId().equals(studentId);
+                    if (idMatch) {
+                        totalClasses++; // Student is in this session's roster
+                        if ("PRESENT".equals(sa.getStatus()) || "LATE".equals(sa.getStatus())) {
+                            attended++;
+                        }
                         break;
                     }
                 }

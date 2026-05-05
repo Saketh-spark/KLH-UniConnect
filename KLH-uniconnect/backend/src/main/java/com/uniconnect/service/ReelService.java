@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ReelService {
+    private static final String SAFE_FALLBACK_VIDEO_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
     private final ReelRepository reelRepository;
     private final StudentRepository studentRepository;
     private final FacultyRepository facultyRepository;
@@ -399,6 +400,7 @@ public class ReelService {
         String department = (uploaderInfo[1] != null && !uploaderInfo[1].isEmpty()) ? uploaderInfo[1] : "Unknown";
         String year = uploaderInfo[2]; // year can be null
         String avatar = (uploaderInfo[3] != null && !uploaderInfo[3].isEmpty()) ? uploaderInfo[3] : "https://via.placeholder.com/48";
+        String safeVideoUrl = sanitizeVideoUrl(reel.getVideoUrl());
 
         return new ReelResponse(
                 reel.getId(),
@@ -410,7 +412,7 @@ public class ReelService {
                 uploaderRole,
                 reel.getTitle(),
                 reel.getDescription(),
-                reel.getVideoUrl(),
+                safeVideoUrl,
                 reel.getThumbnailUrl(),
                 reel.getCategory(),
                 reel.getCreatedAt(),
@@ -454,6 +456,7 @@ public class ReelService {
                 .collect(Collectors.toList());
 
         boolean isLikedByFaculty = currentFacultyId != null && reel.getLikedByFaculty().contains(currentFacultyId);
+        String safeVideoUrl = sanitizeVideoUrl(reel.getVideoUrl());
 
         return new ReelFeedResponse(
                 reel.getId(),
@@ -464,7 +467,7 @@ public class ReelService {
                 reel.getAvatar(),
                 reel.getTitle(),
                 reel.getDescription(),
-                reel.getVideoUrl(),
+                safeVideoUrl,
                 reel.getThumbnailUrl(),
                 reel.getCategory(),
                 reel.getSubject(),
@@ -491,6 +494,21 @@ public class ReelService {
                 false, // isSavedByCurrentUser
                 isLikedByFaculty
         );
+    }
+
+    private String sanitizeVideoUrl(String rawUrl) {
+        if (rawUrl == null || rawUrl.trim().isEmpty()) {
+            return SAFE_FALLBACK_VIDEO_URL;
+        }
+
+        String normalized = rawUrl.trim();
+
+        // The public Cloudinary demo asset has become unreliable and often 404s.
+        if (normalized.contains("res.cloudinary.com/demo/") || normalized.contains("sea-turtle.mp4")) {
+            return SAFE_FALLBACK_VIDEO_URL;
+        }
+
+        return normalized;
     }
 
     // Admin method to clear all reels

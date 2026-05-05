@@ -1,10 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,jsx}'],
   safelist: [
     { pattern: /^bg-(teal|emerald|blue|violet|amber|purple|orange|red|indigo|pink|cyan|slate)-(50|100|200)/ },
     { pattern: /^text-(teal|emerald|blue|violet|amber|purple|orange|red|indigo|pink|cyan|slate)-(400|500|600|700)/ },
-    { pattern: /^hover:bg-(teal|emerald|blue|violet|amber|purple|orange|red|indigo|pink|cyan)-(100|200)/ },
+    { pattern: /^bg-(teal|emerald|blue|violet|amber|purple|orange|red|indigo|pink|cyan)-(100|200)/, variants: ['hover'] },
     { pattern: /^(from|via|to)-(teal|emerald|blue|violet|amber|purple|indigo|cyan)-(500|600|700)/ },
     { pattern: /^shadow-(teal|emerald|indigo|violet)-(500|600)\/(10|20)/ },
     { pattern: /^border-(teal|indigo|violet)-(400|500)/ },
@@ -13,7 +14,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'Poppins', 'system-ui', 'sans-serif']
+        sans: ['Inter', 'Poppins', 'Noto Sans Devanagari', 'Noto Sans Telugu', 'system-ui', 'sans-serif']
       },
       colors: {
         uniblue: '#0F5BFF',

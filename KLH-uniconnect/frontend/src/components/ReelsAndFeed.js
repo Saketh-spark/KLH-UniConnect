@@ -18,6 +18,11 @@ import InstagramStyleUploadModal from './InstagramStyleUploadModal';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8085';
 const WS_BASE = import.meta.env.VITE_WS_URL ?? 'ws://localhost:8085';
+const FALLBACK_VIDEO_URLS = [
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
+];
 
 /**
  * ReelsAndFeed - Instagram-Style Reels & Feed for Student Portal
@@ -40,6 +45,7 @@ const ReelsAndFeed = ({ studentId, onBack, onRequireSignIn }) => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [videoLoading, setVideoLoading] = useState(true);
   const [videoError, setVideoError] = useState(null);
+  const [videoSourceIndex, setVideoSourceIndex] = useState(0);
   
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
@@ -68,6 +74,17 @@ const ReelsAndFeed = ({ studentId, onBack, onRequireSignIn }) => {
     if (url.startsWith('http')) return url;
     return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
   };
+
+  const getVideoCandidates = useCallback((reel) => {
+    if (!reel) return FALLBACK_VIDEO_URLS;
+
+    const candidates = [
+      normalizeVideoUrl(reel.videoUrl),
+      ...FALLBACK_VIDEO_URLS
+    ].filter(Boolean);
+
+    return [...new Set(candidates)];
+  }, [normalizeVideoUrl]);
 
   const loadReels = async () => {
     try {
@@ -204,6 +221,7 @@ const ReelsAndFeed = ({ studentId, onBack, onRequireSignIn }) => {
   useEffect(() => {
     setVideoError(null);
     setVideoLoading(true);
+    setVideoSourceIndex(0);
   }, [currentIndex]);
 
   const handleTouchStart = (e) => {
@@ -537,6 +555,8 @@ const ReelsAndFeed = ({ studentId, onBack, onRequireSignIn }) => {
   const currentReel = reels[currentIndex];
   const isLiked = likedReels.has(currentReel.id);
   const isSaved = savedReels.has(currentReel.id);
+  const videoCandidates = getVideoCandidates(currentReel);
+  const currentVideoSrc = videoCandidates[Math.min(videoSourceIndex, videoCandidates.length - 1)] || currentReel.videoUrl;
 
   return (
     <div
@@ -626,11 +646,12 @@ const ReelsAndFeed = ({ studentId, onBack, onRequireSignIn }) => {
             <div className="text-center text-white">
               <p className="text-lg mb-2">Unable to play video</p>
               <p className="text-sm text-gray-400 mb-4">{videoError}</p>
-              <p className="text-xs text-gray-500">URL: {currentReel.videoUrl}</p>
+              <p className="text-xs text-gray-500">URL: {currentVideoSrc}</p>
               <button
                 onClick={() => {
                   setVideoError(null);
                   setVideoLoading(true);
+                  setVideoSourceIndex(0);
                 }}
                 className="mt-4 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 text-sm"
               >
@@ -641,9 +662,9 @@ const ReelsAndFeed = ({ studentId, onBack, onRequireSignIn }) => {
         )}
         
         <video
-          key={currentReel.id}
+          key={`${currentReel.id}-${videoSourceIndex}`}
           ref={videoRef}
-          src={currentReel.videoUrl}
+          src={currentVideoSrc}
           className="w-full h-full object-cover cursor-pointer"
           autoPlay={isPlaying}
           loop
@@ -658,8 +679,16 @@ const ReelsAndFeed = ({ studentId, onBack, onRequireSignIn }) => {
           onCanPlay={() => setVideoLoading(false)}
           onError={(e) => {
             console.error('Video playback error:', e);
-            console.error('Video URL attempted:', currentReel.videoUrl);
-            setVideoError(`Failed to load: ${currentReel.videoUrl}`);
+            console.error('Video URL attempted:', currentVideoSrc);
+
+            if (videoSourceIndex < videoCandidates.length - 1) {
+              setVideoSourceIndex(prev => prev + 1);
+              setVideoError(null);
+              setVideoLoading(true);
+              return;
+            }
+
+            setVideoError(`Failed to load: ${currentVideoSrc}`);
             setVideoLoading(false);
           }}
           controlsList="nodownload"

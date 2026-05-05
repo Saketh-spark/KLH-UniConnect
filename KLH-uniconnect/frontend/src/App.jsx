@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import {
 	Award,
 	Building2,
@@ -16,6 +17,8 @@ import {
 	Users,
 	Wrench
 } from 'lucide-react';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Stats from './components/Stats';
@@ -221,13 +224,39 @@ const pillars = [
 	}
 ];
 
-const App = () => {
-	const [view, setView] = useState('landing');
-	const [userRole, setUserRole] = useState(null); // 'student' or 'faculty'
+const API = import.meta.env.VITE_API_BASE ?? 'http://localhost:8085';
+
+const AppContent = () => {
+	const { setTheme } = useTheme();
+	const { setLanguage } = useLanguage();
+	const settingsTabRef = useRef(null);
+	const [view, setView] = useState(() => {
+		const savedView = localStorage.getItem('klhView');
+		const savedRole = localStorage.getItem('klhUserRole');
+		const savedEmail = localStorage.getItem('klhEmail');
+		// Only restore view if user was authenticated
+		if (savedEmail && savedRole && savedView) return savedView;
+		return 'landing';
+	});
+	const [userRole, setUserRole] = useState(() => localStorage.getItem('klhUserRole') || null);
 	const [email, setEmail] = useState(() => localStorage.getItem('klhEmail') || '');
 	const [studentId, setStudentId] = useState(() => localStorage.getItem('klhStudentId') || localStorage.getItem('studentId') || null);
 	const [facultyId, setFacultyId] = useState(() => localStorage.getItem('klhFacultyId') || null);
 	const [shareLink, setShareLink] = useState(null);
+	const [chatWithEmail, setChatWithEmail] = useState(null);
+
+	// Persist view & userRole to localStorage whenever they change
+	useEffect(() => {
+		if (view && view !== 'landing' && view !== 'roles' && view !== 'auth' && view !== 'faculty-auth') {
+			localStorage.setItem('klhView', view);
+		}
+	}, [view]);
+
+	useEffect(() => {
+		if (userRole) {
+			localStorage.setItem('klhUserRole', userRole);
+		}
+	}, [userRole]);
 
 	// Check for certificate share link in URL
 	useEffect(() => {
@@ -248,6 +277,8 @@ const App = () => {
 		localStorage.removeItem('klhStudentId');
 		localStorage.removeItem('studentId');
 		localStorage.removeItem('klhFacultyId');
+		localStorage.removeItem('klhView');
+		localStorage.removeItem('klhUserRole');
 		setEmail('');
 		setStudentId(null);
 		setFacultyId(null);
@@ -267,13 +298,19 @@ const App = () => {
 
 	const handleAuthenticated = (emailAddress, receivedStudentId) => {
 		setEmail(emailAddress || '');
-		// Use received studentId from backend, or extract from email as fallback
 		const finalId = receivedStudentId || (emailAddress ? emailAddress.split('@')[0] : null);
 		setStudentId(finalId);
 		setUserRole('student');
+		localStorage.setItem('klhEmail', emailAddress || '');
 		localStorage.setItem('klhStudentId', finalId);
-		localStorage.setItem('studentId', finalId); // Keep both for compatibility
+		localStorage.setItem('studentId', finalId);
 		setView('dashboard');
+		// Load theme/language preferences from backend
+		axios.get(`${API}/api/students/profile/${emailAddress}`)
+			.then(res => {
+				if (res.data?.theme) setTheme(res.data.theme === 'Dark' ? 'dark' : 'light');
+				if (res.data?.language) setLanguage(res.data.language);
+			}).catch(() => {});
 	};
 
 	const handleFacultyAuthenticated = (emailAddress, receivedFacultyId) => {
@@ -281,8 +318,15 @@ const App = () => {
 		const finalId = receivedFacultyId || (emailAddress ? emailAddress.split('@')[0] : null);
 		setFacultyId(finalId);
 		setUserRole('faculty');
+		localStorage.setItem('klhEmail', emailAddress || '');
 		localStorage.setItem('klhFacultyId', finalId);
 		setView('faculty-dashboard');
+		// Load theme/language preferences from backend
+		axios.get(`${API}/api/faculty/profile/${emailAddress}`)
+			.then(res => {
+				if (res.data?.theme) setTheme(res.data.theme === 'Dark' ? 'dark' : 'light');
+				if (res.data?.language) setLanguage(res.data.language);
+			}).catch(() => {});
 	};
 
 	const handleModuleSelect = (moduleKey) => {
@@ -344,6 +388,13 @@ const App = () => {
 			}
 		} else if (moduleKey === 'analytics') {
 			setView('analytics');
+		} else if (moduleKey === 'settings') {
+			settingsTabRef.current = 'settings';
+			if (userRole === 'faculty') {
+				setView('faculty-profile');
+			} else {
+				setView('profile');
+			}
 		}
 	};
 	const backToDashboard = () => setView('dashboard');
@@ -374,11 +425,15 @@ const App = () => {
 	}
 
 	if (view === 'profile') {
-		return <StudentProfile email={email} onBack={backToDashboard} />;
+		const tab = settingsTabRef.current;
+		settingsTabRef.current = null;
+		return <StudentProfile email={email} onBack={backToDashboard} defaultTab={tab} />;
 	}
 
 	if (view === 'faculty-profile') {
-		return <FacultyProfile email={email} onBack={backToFacultyDashboard} />;
+		const tab = settingsTabRef.current;
+		settingsTabRef.current = null;
+		return <FacultyProfile email={email} onBack={backToFacultyDashboard} defaultTab={tab} />;
 	}
 
 	if (view === 'reels') {
@@ -410,19 +465,25 @@ const App = () => {
 	}
 
 	if (view === 'chat') {
-		return <ChatModule email={email} onBack={backToDashboard} userRole="student" />;
+		return <ChatModule key={chatWithEmail || 'chat'} email={email} onBack={() => { setChatWithEmail(null); backToDashboard(); }} userRole="student" openWithEmail={chatWithEmail} />;
 	}
 
 	if (view === 'faculty-chat') {
-		return <ChatModule email={email} onBack={backToFacultyDashboard} userRole="faculty" />;
+		return <ChatModule key={chatWithEmail || 'fchat'} email={email} onBack={() => { setChatWithEmail(null); backToFacultyDashboard(); }} userRole="faculty" openWithEmail={chatWithEmail} />;
 	}
 
 	if (view === 'student-discover') {
-		return <StudentDiscover email={email} onBack={backToDashboard} onChat={() => setView('chat')} />;
+		return <StudentDiscover email={email} onBack={backToDashboard} onChat={(targetEmail) => {
+			if (targetEmail) setChatWithEmail(targetEmail);
+			setView('chat');
+		}} />;
 	}
 
 	if (view === 'faculty-discover') {
-		return <FacultyDiscover email={email} onBack={backToFacultyDashboard} onChat={() => setView('faculty-chat')} />;
+		return <FacultyDiscover email={email} onBack={backToFacultyDashboard} onChat={(targetEmail) => {
+			if (targetEmail) setChatWithEmail(targetEmail);
+			setView('faculty-chat');
+		}} />;
 	}
 
 	if (view === 'ai-assistant') {
@@ -475,5 +536,13 @@ const App = () => {
 		</div>
 	);
 };
+
+const App = () => (
+	<ThemeProvider>
+		<LanguageProvider>
+			<AppContent />
+		</LanguageProvider>
+	</ThemeProvider>
+);
 
 export default App;

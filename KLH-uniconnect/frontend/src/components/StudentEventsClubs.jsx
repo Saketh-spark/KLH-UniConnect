@@ -439,28 +439,30 @@ export default function StudentEventsClubs({ studentId, email, onBack }) {
               const CatIcon = CATEGORY_ICONS[club.category] || Users;
               const member = isClubMember(club);
               return (
-                <div key={club.id} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-lg transition cursor-pointer"
+                <div key={club.id} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-lg hover:border-purple-200 transition cursor-pointer"
                   onClick={() => setSelectedClub(club)}>
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-100 to-indigo-100">
-                      <CatIcon size={22} className="text-purple-600" />
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 group-hover:from-purple-200 group-hover:to-indigo-200 transition">
+                      <CatIcon size={26} className="text-purple-600" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-bold text-slate-900 truncate">{club.name}</h3>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">{club.category}</span>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-bold text-slate-900 truncate">{club.name}</h3>
+                        {member && <CheckCircle size={16} className="text-green-500 shrink-0" />}
+                      </div>
+                      <span className="mt-1 inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500">{club.category}</span>
                     </div>
-                    {member && <CheckCircle size={16} className="text-green-500 shrink-0" />}
                   </div>
-                  <p className="mt-3 text-xs text-slate-500 line-clamp-2">{club.description}</p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-400"><Users size={11} className="inline mr-1" />{club.memberCount || 0} members</span>
+                  <p className="mt-4 text-sm text-slate-500 line-clamp-2 leading-relaxed">{club.description}</p>
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+                    <span className="text-xs text-slate-400 flex items-center gap-1"><Users size={13} />{club.memberCount || 0} members</span>
                     {!member ? (
                       <button onClick={e => { e.stopPropagation(); joinClub(club.id); }}
-                        className="rounded-lg bg-purple-600 px-3 py-1 text-[11px] font-bold text-white hover:bg-purple-700 transition">
-                        Join
+                        className="rounded-lg bg-purple-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-purple-700 transition shadow-sm">
+                        Join Club
                       </button>
                     ) : (
-                      <span className="text-[11px] font-bold text-green-600">Member</span>
+                      <span className="rounded-lg bg-green-50 border border-green-200 px-3 py-1 text-xs font-bold text-green-600">Member</span>
                     )}
                   </div>
                 </div>

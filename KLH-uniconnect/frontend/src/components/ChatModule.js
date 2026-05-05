@@ -17,7 +17,7 @@ const EMOJI_LIST = ['😀','😂','😍','🤔','😎','👍','❤️','🔥','�
 const ICE_SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
 
 // ─── Unified Chat Module ───
-export default function ChatModule({ email, onBack, userRole = 'student' }) {
+export default function ChatModule({ email, onBack, userRole = 'student', openWithEmail = null }) {
   // ─── State ───
   const [activeTab, setActiveTab] = useState('chats'); // chats | groups
   const [conversations, setConversations] = useState([]);
@@ -229,6 +229,51 @@ export default function ChatModule({ email, onBack, userRole = 'student' }) {
     return () => clearInterval(pollRef.current);
   }, [email]);
 
+  // ─── Auto-open conversation from Discover ───
+  const openWithEmailRef = useRef(openWithEmail);
+  openWithEmailRef.current = openWithEmail;
+  const [autoOpenDone, setAutoOpenDone] = useState(false);
+
+  useEffect(() => {
+    if (!openWithEmailRef.current || autoOpenDone) return;
+    const targetEmail = openWithEmailRef.current;
+
+    const autoOpen = async () => {
+      try {
+        // Check mutual follow first
+        const checkRes = await fetch(`${API_BASE}/api/chat/can-chat?email1=${encodeURIComponent(email)}&email2=${encodeURIComponent(targetEmail)}`);
+        if (checkRes.ok) {
+          const { canChat } = await checkRes.json();
+          if (!canChat) {
+            alert('You can start chatting once both users follow each other.');
+            setAutoOpenDone(true);
+            return;
+          }
+        }
+        // Create or get conversation
+        const res = await fetch(`${API_BASE}/api/chat/conversations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId1: email, userId2: targetEmail })
+        });
+        if (res.ok) {
+          const conversation = await res.json();
+          await loadConversations();
+          selectChat('conversation', conversation);
+        } else if (res.status === 403) {
+          alert('You can start chatting once both users follow each other.');
+        }
+      } catch (err) {
+        console.error('Auto-open chat failed:', err);
+      }
+      setAutoOpenDone(true);
+    };
+
+    // Small delay to let conversations load first
+    const timer = setTimeout(autoOpen, 500);
+    return () => clearTimeout(timer);
+  }, [email, autoOpenDone]);
+
   const loadConversations = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/chat/conversations/${encodeURIComponent(email)}`);
@@ -333,6 +378,8 @@ export default function ChatModule({ email, onBack, userRole = 'student' }) {
         setSearchResults([]);
         await loadConversations();
         selectChat('conversation', conversation);
+      } else if (res.status === 403) {
+        alert('You can start chatting once both users follow each other.');
       }
     } catch (err) {
       console.error(err);
