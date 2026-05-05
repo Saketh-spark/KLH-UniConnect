@@ -61,6 +61,21 @@ export default defineConfig({
       }
     }
   },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    sourcemap: false,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+          'socket': ['socket.io-client'],
+          'charts': ['recharts']
+        }
+      }
+    }
+  },
   server: {
     port: 4173
   }

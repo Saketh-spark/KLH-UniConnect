@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: klh-uniconnect-backend
+    runtime: java
+    plan: free
+    buildCommand: mvn clean install -DskipTests -q
+    startCommand: java -jar target/uniconnect-*.jar
+    envVars:
+      - key: JAVA_OPTS
+        value: "-Xmx512m"
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+    healthCheckPath: /api/health
